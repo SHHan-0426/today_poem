@@ -233,14 +233,21 @@ body.edit-mode .edit-help { display: block; }
 }
 .fab-feedback.hidden { display: none !important; }
 
-/* 모바일: 하단 메뉴 위로 띄움 */
+/* 모바일: 헤더 우측 끝에 항상 보이게 */
 @media (max-width: 640px) {
   .fab-feedback {
-    bottom: 140px;     /* 하단 고정 메뉴(약 120px) 위 */
-    right: 14px;
-    padding: 10px 16px;
-    font-size: 13px;
+    top: 14px;
+    right: 12px;
+    bottom: auto;      /* 기본 bottom 28px 무효화 */
+    left: auto;
+    z-index: 110;      /* 헤더(100) 위로 */
+    padding: 7px 14px;
+    font-size: 12.5px;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(138,58,44,.30);
   }
+  /* 브랜드 글자가 단추와 겹치지 않게 헤더 오른쪽 여유 */
+  .site-header .container { padding-right: 116px; }
 }
 
 /* save toast */
