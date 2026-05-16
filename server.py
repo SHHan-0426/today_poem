@@ -123,8 +123,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_DELETE(self):
         m = re.match(r'^/api/comments/(\d+)/([\w-]+)$', self.path)
         if m: return self._delete_comment(int(m.group(1)), m.group(2))
+        # 방문자 본인 글 삭제: visitor_id 쿼리스트링 일치 확인
+        m = re.match(r'^/api/guestbook/([\w-]+)(?:\?.*)?$', self.path)
+        if m: return self._delete_guestbook_owned(m.group(1))
+        self.send_error(404)
+
+    def do_PATCH(self):
         m = re.match(r'^/api/guestbook/([\w-]+)$', self.path)
-        if m: return self._delete_guestbook(m.group(1))
+        if m: return self._patch_guestbook_owned(m.group(1))
         self.send_error(404)
 
     def do_GET(self):
@@ -203,10 +209,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         body = sanitize_text(d.get('body',''), MAX_BODY_LEN)
         if not body: return self.send_error(400, 'body required')
         is_teacher = bool(d.get('is_teacher'))
+        vid = d.get('visitor_id', '')
         entry = {
             'id': uuid.uuid4().hex[:10],
             'name': name, 'body': body, 'ts': now_iso(),
             'is_teacher': is_teacher,
+            'visitor_id': vid,
         }
         with LOCK:
             arr = load_json(GUEST, [])
@@ -224,6 +232,38 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             arr = [g for g in arr if g.get('id') != gid]
             save_json(GUEST, arr, backup_tag='guest-del')
         self._json({'ok': True, 'removed': before - len(arr)})
+
+    def _delete_guestbook_owned(self, gid):
+        # 쿼리스트링에서 visitor_id 추출
+        from urllib.parse import urlparse, parse_qs
+        q = parse_qs(urlparse(self.path).query)
+        vid = (q.get('visitor_id') or [''])[0]
+        if not vid: return self.send_error(403, 'visitor_id required')
+        with LOCK:
+            arr = load_json(GUEST, [])
+            target = next((g for g in arr if g.get('id') == gid), None)
+            if target is None: return self.send_error(404, 'not found')
+            if target.get('visitor_id') != vid: return self.send_error(403, 'not the author')
+            arr = [g for g in arr if g.get('id') != gid]
+            save_json(GUEST, arr, backup_tag='guest-del-own')
+        self._json({'ok': True})
+
+    def _patch_guestbook_owned(self, gid):
+        d = self._read_json()
+        if d is None: return
+        vid = d.get('visitor_id', '')
+        new_body = sanitize_text(d.get('body',''), MAX_BODY_LEN)
+        if not vid or not new_body:
+            return self.send_error(400, 'visitor_id and body required')
+        with LOCK:
+            arr = load_json(GUEST, [])
+            target = next((g for g in arr if g.get('id') == gid), None)
+            if target is None: return self.send_error(404, 'not found')
+            if target.get('visitor_id') != vid: return self.send_error(403, 'not the author')
+            target['body'] = new_body
+            target['edited_at'] = now_iso()
+            save_json(GUEST, arr, backup_tag='guest-edit')
+        self._json({'ok': True, 'entry': target})
 
     # ── 선생님께 보내는 편지 (비공개) ──────────────────
     def _post_message(self):

@@ -19,6 +19,18 @@
   const WRITE_ENABLED = ['localhost', '127.0.0.1'].includes(location.hostname);
   const STATIC_NOTE = '<div class="static-note">🌱 방문자 기록 기능은 곧 추가됩니다. 지금은 시와 단상만 둘러보실 수 있습니다.</div>';
 
+  // 방문자 식별 — 브라우저에 한 번 만들어 두는 비밀 ID
+  // (이 ID 가 있는 글만 같은 방문자가 수정·삭제 가능)
+  const VISITOR_ID = (() => {
+    let id = localStorage.getItem('visitorId');
+    if (!id || id.length < 30) {
+      id = (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+           ('v_' + Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2));
+      localStorage.setItem('visitorId', id);
+    }
+    return id;
+  })();
+
   const SEASON_KEY = { 봄: 'spring', 여름: 'summer', 가을: 'autumn', 겨울: 'winter' };
   const SEASON_DESC = {
     봄: '3·4·5월의 시 — 새순과 첫 햇살, 다시 시작하는 마음',
@@ -843,21 +855,22 @@
       return (d.entries || []).slice().sort((a,b) => (a.ts<b.ts?1:-1));
     }
     if (SUPABASE_READY) {
-      const r = await fetch(`${SB.url}/rest/v1/guestbook?select=*&order=created_at.desc&limit=200`, {
+      const r = await fetch(`${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id&order=created_at.desc&limit=200`, {
         headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` },
       });
       if (!r.ok) throw new Error(`Supabase ${r.status}`);
       const arr = await r.json();
-      return arr.map((x) => ({ id: x.id, name: x.name, body: x.body, ts: x.created_at }));
+      return arr.map((x) => ({ id: x.id, name: x.name, body: x.body, ts: x.created_at, visitor_id: x.visitor_id }));
     }
     return null;  // 백엔드 미설정
   }
 
   async function postFeedback(name, body) {
+    const payload = { name, body, visitor_id: VISITOR_ID };
     if (WRITE_ENABLED) {
       const r = await fetch('/api/guestbook', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, body }),
+        body: JSON.stringify(payload),
       });
       return r.ok;
     }
@@ -870,8 +883,56 @@
           'Content-Type': 'application/json',
           Prefer: 'return=minimal',
         },
-        body: JSON.stringify({ name, body }),
+        body: JSON.stringify(payload),
       });
+      return r.ok;
+    }
+    return false;
+  }
+
+  async function editFeedback(id, newBody) {
+    if (WRITE_ENABLED) {
+      const r = await fetch(`/api/guestbook/${encodeURIComponent(id)}`, {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ body: newBody, visitor_id: VISITOR_ID }),
+      });
+      return r.ok;
+    }
+    if (SUPABASE_READY) {
+      const r = await fetch(
+        `${SB.url}/rest/v1/guestbook?id=eq.${id}&visitor_id=eq.${VISITOR_ID}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: SB.anonKey,
+            Authorization: `Bearer ${SB.anonKey}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ body: newBody }),
+        }
+      );
+      return r.ok;
+    }
+    return false;
+  }
+
+  async function deleteFeedback(id) {
+    if (WRITE_ENABLED) {
+      const r = await fetch(
+        `/api/guestbook/${encodeURIComponent(id)}?visitor_id=${encodeURIComponent(VISITOR_ID)}`,
+        { method: 'DELETE' }
+      );
+      return r.ok;
+    }
+    if (SUPABASE_READY) {
+      const r = await fetch(
+        `${SB.url}/rest/v1/guestbook?id=eq.${id}&visitor_id=eq.${VISITOR_ID}`,
+        {
+          method: 'DELETE',
+          headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` },
+        }
+      );
       return r.ok;
     }
     return false;
@@ -939,17 +1000,85 @@
         wrap.innerHTML = '<div class="empty-note">아직 첫 소감이 없습니다. 따뜻한 한 마디를 남겨 주세요.</div>';
         return;
       }
-      wrap.innerHTML = entries.map((g) => `
-        <article class="fb-entry">
+      wrap.innerHTML = entries.map((g) => {
+        const mine = g.visitor_id && g.visitor_id === VISITOR_ID;
+        return `
+        <article class="fb-entry ${mine ? 'mine' : ''}" data-id="${escapeHtml(g.id)}">
           <div class="fb-head">
             <span class="fb-name">${escapeHtml(g.name)}</span>
             <span class="fb-time">${tsFormat(g.ts)}</span>
+            ${mine ? `
+              <span class="fb-actions">
+                <button class="fb-edit-btn" data-act="edit" data-id="${escapeHtml(g.id)}">수정</button>
+                <button class="fb-del-btn"  data-act="del"  data-id="${escapeHtml(g.id)}">삭제</button>
+              </span>` : ''}
           </div>
           <div class="fb-body">${escapeHtml(g.body)}</div>
-        </article>`).join('');
+        </article>`;
+      }).join('');
+      bindFeedbackActions();
     } catch (e) {
       wrap.innerHTML = `<div class="empty-note err">불러올 수 없습니다: ${e.message}</div>`;
     }
+  }
+
+  function bindFeedbackActions() {
+    const wrap = document.getElementById('fb-list');
+    if (!wrap) return;
+    // 수정
+    wrap.querySelectorAll('[data-act="edit"]').forEach((btn) => {
+      btn.addEventListener('click', () => startEditFeedback(btn.dataset.id));
+    });
+    // 삭제
+    wrap.querySelectorAll('[data-act="del"]').forEach((btn) => {
+      btn.addEventListener('click', () => confirmDeleteFeedback(btn.dataset.id));
+    });
+  }
+
+  function startEditFeedback(id) {
+    const article = document.querySelector(`.fb-entry[data-id="${CSS.escape(id)}"]`);
+    if (!article) return;
+    const bodyEl = article.querySelector('.fb-body');
+    const oldText = bodyEl.textContent;
+    const edit = document.createElement('div');
+    edit.className = 'fb-edit-pane';
+    edit.innerHTML = `
+      <textarea class="fb-edit-area" maxlength="2000" rows="4">${escapeHtml(oldText)}</textarea>
+      <div class="fb-edit-row">
+        <button class="btn-primary" data-save="${escapeHtml(id)}">저장</button>
+        <button class="fb-edit-cancel">취소</button>
+        <span class="form-status fb-edit-status"></span>
+      </div>`;
+    bodyEl.style.display = 'none';
+    article.appendChild(edit);
+    edit.querySelector('textarea').focus();
+
+    edit.querySelector('.fb-edit-cancel').addEventListener('click', () => {
+      bodyEl.style.display = '';
+      edit.remove();
+    });
+    edit.querySelector('[data-save]').addEventListener('click', async (ev) => {
+      const newBody = edit.querySelector('textarea').value.trim();
+      if (!newBody) return;
+      const status = edit.querySelector('.fb-edit-status');
+      ev.target.disabled = true;
+      status.textContent = '저장 중…'; status.className = 'form-status fb-edit-status';
+      try {
+        const ok = await editFeedback(id, newBody);
+        if (!ok) throw new Error('저장 실패 — 권한이 없거나 서버 오류');
+        loadFeedbackList();
+      } catch (e) {
+        ev.target.disabled = false;
+        status.textContent = e.message; status.className = 'form-status fb-edit-status err';
+      }
+    });
+  }
+
+  async function confirmDeleteFeedback(id) {
+    if (!confirm('이 소감을 삭제할까요?\n(되돌릴 수 없습니다)')) return;
+    const ok = await deleteFeedback(id);
+    if (!ok) { alert('삭제 실패 — 권한이 없거나 서버 오류'); return; }
+    loadFeedbackList();
   }
 
   // ─── GUESTBOOK (이전 — 사용 안 함, 호환 위해 남겨둠) ─────────
