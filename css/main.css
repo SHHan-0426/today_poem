@@ -1534,6 +1534,68 @@ body.edit-mode .edit-help { display: block; }
 .about-page .stat .num { font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--accent); }
 .about-page .stat .label { font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade); margin-top: 4px; letter-spacing: .05em; }
 
+/* 함께 보면 좋은 영상 (유하재 인터뷰) */
+.related-video {
+  margin: 56px 0 40px;
+  padding: 36px 32px;
+  background: var(--paper-deep);
+  border: 1px solid var(--accent-soft);
+  border-radius: 6px;
+}
+.related-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.related-desc {
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin-bottom: 22px !important;
+}
+.related-desc strong { color: var(--ink); }
+
+.video-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;          /* 16:9 비율 */
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+}
+.video-wrap iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.related-meta {
+  margin-top: 16px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-fade);
+  text-align: right;
+}
+.related-meta a {
+  color: var(--accent);
+  border-bottom: 1px dotted var(--accent-soft);
+}
+.related-meta a:hover { border-bottom-style: solid; }
+
+@media (max-width: 640px) {
+  .related-video { padding: 24px 18px; margin: 36px -16px; border-radius: 0; }
+  .related-title { font-size: 19px; }
+  .related-desc { font-size: 14.5px; }
+}
+
 /* ===================================================================
    responsive
    =================================================================== */

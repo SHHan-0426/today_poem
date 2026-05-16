@@ -1149,6 +1149,31 @@
           한 달에 한 편씩, 천천히 소리 내어 낭송해 주시기를 권합니다.
         </p>
 
+        <!-- 함께 보면 좋은 영상 ─ 유하재 인터뷰 ─────────── -->
+        <section class="related-video">
+          <h2 class="related-title">함께 보시면 좋은 영상</h2>
+          <p class="related-desc">
+            선생님이 시를 쓰시는 그 공간 — <strong>강화 동검리 유하재(柳下齋)</strong>를 들여다 보는 인터뷰입니다.
+            건축가 정재헌 작품에 깃든 시간과 삶, 그리고 그 안에서 매달 1일에 한 편의 편지를 띄우시는
+            <strong>겸하 김대권 선생님</strong>의 말씀을 직접 들으실 수 있습니다.
+          </p>
+          <div class="video-wrap">
+            <iframe
+              src="https://www.youtube.com/embed/ReK9WkGyZ7k"
+              title="inter-VIEW 01_ 겸하 김대권 선생님 인터뷰"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen></iframe>
+          </div>
+          <p class="related-meta">
+            <a href="https://www.youtube.com/watch?v=ReK9WkGyZ7k" target="_blank" rel="noopener">
+              YouTube에서 열기 →
+            </a>
+            <span> · 기획·제작: <a href="https://www.youtube.com/@pixelhouse" target="_blank" rel="noopener">pixelhouse</a></span>
+          </p>
+        </section>
+
         <p style="font-family: var(--sans); font-size: 13px; color: var(--ink-fade); margin-top: 48px;">
           저작권 안내 — 수록된 시의 저작권은 각 시인에게 있으며, 단상은 김대권 선생님께 있습니다.
           본 사이트는 비영리 교육·기념 목적으로 운영됩니다.
