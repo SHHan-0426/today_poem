@@ -19,3 +19,6 @@ data/poems_index.csv
 .vscode/
 .idea/
 *.swp
+
+# Local Netlify folder
+.netlify

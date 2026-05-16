@@ -8,22 +8,23 @@
   status = 200
 
 # 캐시 헤더 — 폰트·이미지는 길게, html/json 은 짧게
+# 사이트 운영 중에는 캐시를 짧게 — 변경 즉시 반영
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=300, must-revalidate"
+    Cache-Control = "public, no-cache, must-revalidate"
 
 [[headers]]
   for = "/data/*.json"
   [headers.values]
-    Cache-Control = "public, max-age=300, must-revalidate"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=60, must-revalidate"
