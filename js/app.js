@@ -123,20 +123,26 @@
     }
 
     // edit mode toggle (persist via localStorage)
+    // ✋ 로컬 서버가 아니면 편집 버튼 자체를 숨김 (외부 방문자에게 노출 X)
     const editBtn = document.getElementById('edit-toggle');
     if (editBtn) {
-      const setEditMode = (on) => {
-        document.body.classList.toggle('edit-mode', on);
-        editBtn.classList.toggle('on', on);
-        editBtn.textContent = on ? '✓ 편집중' : '✎ 편집';
-        localStorage.setItem('editMode', on ? '1' : '0');
-      };
-      setEditMode(localStorage.getItem('editMode') === '1');
-      editBtn.addEventListener('click', () => {
-        setEditMode(!document.body.classList.contains('edit-mode'));
-        // re-render current view so editable attrs apply
-        route();
-      });
+      if (!WRITE_ENABLED) {
+        editBtn.remove();
+        document.body.classList.remove('edit-mode');
+        localStorage.removeItem('editMode');
+      } else {
+        const setEditMode = (on) => {
+          document.body.classList.toggle('edit-mode', on);
+          editBtn.classList.toggle('on', on);
+          editBtn.textContent = on ? '✓ 편집중' : '✎ 편집';
+          localStorage.setItem('editMode', on ? '1' : '0');
+        };
+        setEditMode(localStorage.getItem('editMode') === '1');
+        editBtn.addEventListener('click', () => {
+          setEditMode(!document.body.classList.contains('edit-mode'));
+          route();
+        });
+      }
     }
   });
 
