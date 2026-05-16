@@ -5,7 +5,7 @@
    ─────────────────────────────────────────────────────── */
 window.SITE_CONFIG = {
   supabase: {
-    url:     '',   // 예) 'https://abcdefgh.supabase.co'
-    anonKey: '',   // Settings → API → "Project API keys" 의 anon public 키
+    url:     'https://dmxotyhlbbvqntyqkzlc.supabase.co',
+    anonKey: 'sb_publishable_U5ctWVomH1eBfLNEvLd94Q_sYzzLHCN',
   },
 };
