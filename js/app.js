@@ -223,8 +223,9 @@
       else if (parts[0] === 'poet')      renderPoet(decodeURIComponent(parts[1] || ''));
       else if (parts[0] === 'poem')      renderPoem(parseInt(parts[1] || '0', 10));
       else if (parts[0] === 'thoughts')  renderThoughts();
-      else if (parts[0] === 'guestbook') renderGuestbook();
-      else if (parts[0] === 'letter')    renderLetter();
+      else if (parts[0] === 'feedback')  renderFeedback();
+      else if (parts[0] === 'guestbook') renderFeedback();   /* 이전 경로 호환 */
+      else if (parts[0] === 'letter')    renderFeedback();   /* 이전 경로 호환 */
       else if (parts[0] === 'inbox')     renderInbox();
       else if (parts[0] === 'about')     renderAbout();
       else                               renderHome();
@@ -311,16 +312,11 @@
           </ul>
         </section>
 
-        <section class="cta-strip">
-          <a class="cta-card" href="#guestbook">
-            <div class="cta-icon">📖</div>
-            <div class="cta-title">방명록에 인사 남기기</div>
-            <div class="cta-desc">사이트를 방문한 자취를 남겨 주세요</div>
-          </a>
-          <a class="cta-card" href="#letter">
-            <div class="cta-icon">✉️</div>
-            <div class="cta-title">선생님께 편지 쓰기</div>
-            <div class="cta-desc">선생님만 보시는 비공개 편지</div>
+        <section class="cta-strip cta-single">
+          <a class="cta-card" href="#feedback">
+            <div class="cta-icon">✍️</div>
+            <div class="cta-title">방문자 소감 쓰기</div>
+            <div class="cta-desc">시를 읽으신 짧은 한 마디를 모두와 나누어 주세요</div>
           </a>
         </section>
       </div>
@@ -820,8 +816,135 @@
     return (start > 0 ? '…' : '') + piece.slice(start, end) + (end < piece.length ? '…' : '');
   }
 
-  // ─── GUESTBOOK (방명록) ──────────────────────────────────────
-  function renderGuestbook() {
+  // ─── FEEDBACK (방문자 소감 — 통합 페이지) ───────────────────
+  // 로컬 서버에서는 /api/guestbook 사용, 운영(Netlify)에서는 Supabase 사용
+  const SB = (window.SITE_CONFIG && window.SITE_CONFIG.supabase) || {};
+  const SUPABASE_READY = !!(SB.url && SB.anonKey);
+
+  function feedbackBackendLabel() {
+    if (WRITE_ENABLED)    return '로컬 서버';
+    if (SUPABASE_READY)   return 'Supabase';
+    return null;
+  }
+
+  async function fetchFeedback() {
+    if (WRITE_ENABLED) {
+      const r = await fetch('/api/guestbook');
+      const d = await r.json();
+      return (d.entries || []).slice().sort((a,b) => (a.ts<b.ts?1:-1));
+    }
+    if (SUPABASE_READY) {
+      const r = await fetch(`${SB.url}/rest/v1/guestbook?select=*&order=created_at.desc&limit=200`, {
+        headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` },
+      });
+      if (!r.ok) throw new Error(`Supabase ${r.status}`);
+      const arr = await r.json();
+      return arr.map((x) => ({ id: x.id, name: x.name, body: x.body, ts: x.created_at }));
+    }
+    return null;  // 백엔드 미설정
+  }
+
+  async function postFeedback(name, body) {
+    if (WRITE_ENABLED) {
+      const r = await fetch('/api/guestbook', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, body }),
+      });
+      return r.ok;
+    }
+    if (SUPABASE_READY) {
+      const r = await fetch(`${SB.url}/rest/v1/guestbook`, {
+        method: 'POST',
+        headers: {
+          apikey: SB.anonKey,
+          Authorization: `Bearer ${SB.anonKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ name, body }),
+      });
+      return r.ok;
+    }
+    return false;
+  }
+
+  function renderFeedback() {
+    if (!WRITE_ENABLED && !SUPABASE_READY) {
+      app.innerHTML = `
+        <div class="container feedback-page">
+          <h1>방문자 소감</h1>
+          <div class="static-note">
+            🌱 소감 기능을 준비 중입니다.<br/>
+            (운영자가 클라우드 데이터베이스 연결을 완료하면 자동으로 열립니다.)
+          </div>
+        </div>`;
+      return;
+    }
+    app.innerHTML = `
+      <div class="container feedback-page">
+        <h1>방문자 소감</h1>
+        <p class="page-intro">시 한 편을 읽고 든 짧은 한 마디, 오래 마음에 남은 구절, 인사 한 줄 — 무엇이든 좋습니다. 다른 방문자들이 시간순으로 보실 수 있게 한 곳에 모입니다.</p>
+
+        <form class="feedback-form" id="fb-form">
+          <input type="text" name="name" placeholder="이름 (또는 별명)" maxlength="40" required />
+          <textarea name="body" placeholder="시·단상에 대한 생각, 인사, 떠오르는 기억…" maxlength="2000" rows="4" required></textarea>
+          <div class="form-row">
+            <button type="submit" class="btn-primary">남기기</button>
+            <span class="form-status"></span>
+          </div>
+        </form>
+
+        <h2 class="feedback-list-title">방문자들의 소감</h2>
+        <div id="fb-list" class="feedback-list">불러오는 중…</div>
+      </div>`;
+
+    loadFeedbackList();
+
+    document.getElementById('fb-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const form = ev.target;
+      const fd = new FormData(form);
+      const status = form.querySelector('.form-status');
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      status.textContent = '보내는 중…'; status.className = 'form-status';
+      try {
+        const ok = await postFeedback(fd.get('name'), fd.get('body'));
+        if (!ok) throw new Error('저장 실패');
+        form.reset();
+        status.textContent = '잘 받았습니다. 고맙습니다.'; status.className = 'form-status ok';
+        loadFeedbackList();
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } catch (e) {
+        status.textContent = '실패: ' + e.message; status.className = 'form-status err';
+      } finally { btn.disabled = false; }
+    });
+  }
+
+  async function loadFeedbackList() {
+    const wrap = document.getElementById('fb-list');
+    if (!wrap) return;
+    try {
+      const entries = await fetchFeedback();
+      if (!entries || entries.length === 0) {
+        wrap.innerHTML = '<div class="empty-note">아직 첫 소감이 없습니다. 따뜻한 한 마디를 남겨 주세요.</div>';
+        return;
+      }
+      wrap.innerHTML = entries.map((g) => `
+        <article class="fb-entry">
+          <div class="fb-head">
+            <span class="fb-name">${escapeHtml(g.name)}</span>
+            <span class="fb-time">${tsFormat(g.ts)}</span>
+          </div>
+          <div class="fb-body">${escapeHtml(g.body)}</div>
+        </article>`).join('');
+    } catch (e) {
+      wrap.innerHTML = `<div class="empty-note err">불러올 수 없습니다: ${e.message}</div>`;
+    }
+  }
+
+  // ─── GUESTBOOK (이전 — 사용 안 함, 호환 위해 남겨둠) ─────────
+  function _unused_renderGuestbook() {
     if (!WRITE_ENABLED) {
       app.innerHTML = `
         <div class="container guestbook-page">
