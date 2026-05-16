@@ -255,10 +255,14 @@ body.edit-mode .edit-help { display: block; }
 }
 .hero-title {
   font-family: var(--display);
-  font-size: clamp(34px, 5vw, 52px);
+  font-size: clamp(28px, 5vw, 52px);
   font-weight: 800;
   letter-spacing: -.02em;
   line-height: 1.2;
+  /* 한국어 어절 단위로 줄바꿈 — "에"가 따로 떨어지지 않게 */
+  word-break: keep-all;
+  line-break: strict;
+  overflow-wrap: break-word;
 }
 .hero-subtitle {
   font-family: var(--sans);
@@ -1412,13 +1416,16 @@ body.edit-mode .edit-help { display: block; }
   .recent-list, .poem-grid { grid-template-columns: 1fr; }
   .season-grid { grid-template-columns: repeat(2, 1fr); }
 
-  /* 상단 헤더 — 브랜드만 sticky */
+  /* 상단 헤더 — 브랜드만 sticky.
+     ⚠️ backdrop-filter는 fixed 자식의 containing block을 헤더로 만들어
+     하단 메뉴가 헤더 안에 박히는 문제가 있어 모바일에선 사용하지 않음. */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    -webkit-backdrop-filter: saturate(160%) blur(8px);
-    backdrop-filter: saturate(160%) blur(8px);
+    background: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   /* 햄버거·편집 버튼 모바일에선 모두 숨김 */
