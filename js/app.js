@@ -246,7 +246,7 @@
     app.innerHTML = `
       <div class="container">
         <section class="hero">
-          <div class="hero-eyebrow">2006 ~ 2026 · 총 ${all.length}편</div>
+          <div class="hero-eyebrow">2006 ~ 계속 · 총 ${all.length}편</div>
           <h1 class="hero-title">국어선생님이 매달 1일에<br/>보내는 편지</h1>
           <p class="hero-subtitle">강화 동검도 유하재에서 · 겸하 김대권</p>
           <p class="hero-quote">
