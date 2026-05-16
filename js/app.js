@@ -223,15 +223,24 @@
       else if (parts[0] === 'poet')      renderPoet(decodeURIComponent(parts[1] || ''));
       else if (parts[0] === 'poem')      renderPoem(parseInt(parts[1] || '0', 10));
       else if (parts[0] === 'thoughts')  renderThoughts();
+      else if (parts[0] === 'today')     { renderHome(); setTimeout(()=>document.getElementById('today-section')?.scrollIntoView({behavior:'smooth',block:'start'}),60); }
       else if (parts[0] === 'feedback')  renderFeedback();
-      else if (parts[0] === 'guestbook') renderFeedback();   /* 이전 경로 호환 */
-      else if (parts[0] === 'letter')    renderFeedback();   /* 이전 경로 호환 */
+      else if (parts[0] === 'guestbook') renderFeedback();
+      else if (parts[0] === 'letter')    renderFeedback();
       else if (parts[0] === 'inbox')     renderInbox();
       else if (parts[0] === 'about')     renderAbout();
       else                               renderHome();
     }
     // After every render, wire up edit-mode behavior if enabled
     attachEditable(app);
+
+    // 떠 있는 '소감 쓰기' 단추: 소감 페이지에선 숨김
+    const fab = document.getElementById('fab-feedback');
+    if (fab) {
+      const top = (location.hash || '').slice(1).split('/')[0];
+      const hide = ['feedback','guestbook','letter','inbox'].includes(top);
+      fab.classList.toggle('hidden', hide);
+    }
   }
 
   // ─── HOME ─────────────────────────────────────────────────────
@@ -273,12 +282,12 @@
           </div>
         </section>
 
-        <!-- 🎨 특별 전시실 — 랜덤 2편 + 셔플 ────────────────── -->
-        <section class="random-exhibit">
+        <!-- 🎨 오늘도 시와 함께 — 랜덤 2편 + 셔플 ────────────── -->
+        <section class="random-exhibit" id="today-section">
           <div class="random-exhibit-head">
             <div>
-              <div class="exhibit-eyebrow">⊛ 특별 전시실</div>
-              <p class="random-exhibit-sub">여기 방문하시는 분들은 아래의 2편의 시와 선생님 생각을 읽으시기 바랍니다</p>
+              <div class="exhibit-eyebrow">⊛ 오늘도 시와 함께</div>
+              <p class="random-exhibit-sub">오늘 선생님이 선정한 시와 해설을 읽어보세요</p>
             </div>
             <button class="shuffle-btn" id="shuffle-btn" type="button">🔀 다른 두 편 보기</button>
           </div>

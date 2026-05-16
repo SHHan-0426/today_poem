@@ -206,6 +206,43 @@ body.edit-mode [data-edit]:empty::before {
 .edit-help em { color: var(--accent); font-style: normal; font-weight: 700; }
 body.edit-mode .edit-help { display: block; }
 
+/* ── 떠 있는 소감 쓰기 단추 ─────────────────────────── */
+.fab-feedback {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 90;
+  background: var(--accent);
+  color: #fff !important;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 6px 20px rgba(138,58,44,.32);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none !important;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.fab-feedback:hover {
+  background: #6d2d22;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(138,58,44,.42);
+}
+.fab-feedback.hidden { display: none !important; }
+
+/* 모바일: 하단 메뉴 위로 띄움 */
+@media (max-width: 640px) {
+  .fab-feedback {
+    bottom: 140px;     /* 하단 고정 메뉴(약 120px) 위 */
+    right: 14px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
 /* save toast */
 .save-toast {
   position: fixed;
