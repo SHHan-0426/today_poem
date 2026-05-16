@@ -1,0 +1,29 @@
+[build]
+  publish = "."
+
+# 해시 라우팅 SPA 이므로 모든 경로는 index.html 로
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 캐시 헤더 — 폰트·이미지는 길게, html/json 은 짧게
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+[[headers]]
+  for = "/data/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=300, must-revalidate"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

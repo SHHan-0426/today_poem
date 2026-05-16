@@ -1,0 +1,1433 @@
+/* ===================================================================
+   마음을 여는 시 — 정적 사이트 스타일
+   =================================================================== */
+
+:root {
+  /* paper-like neutral palette */
+  --paper:        #faf7f1;
+  --paper-deep:   #f3eee3;
+  --ink:          #1f1b15;
+  --ink-soft:     #4b4439;
+  --ink-fade:     #8a8170;
+  --rule:         #d9d2c3;
+  --accent:       #8a3a2c;       /* deep persimmon — Korean lacquer red */
+  --accent-soft:  #c2987a;
+
+  /* season colors */
+  --spring:       #d8a3a3;       /* 벚꽃 분홍 */
+  --spring-bg:    #fbf2f2;
+  --summer:       #6b8a6b;       /* 짙은 녹음 */
+  --summer-bg:    #f1f5ee;
+  --autumn:       #b85c2a;       /* 단풍 주황 */
+  --autumn-bg:    #fbf2e8;
+  --winter:       #4a5a72;       /* 회청 */
+  --winter-bg:    #eef1f5;
+
+  --serif:   "Noto Serif KR", "Nanum Myeongjo", serif;
+  --display: "Nanum Myeongjo", "Noto Serif KR", serif;
+  --sans:    "Noto Sans KR", "Pretendard", -apple-system, "Apple SD Gothic Neo", sans-serif;
+
+  --max-width: 1080px;
+  --reading-width: 720px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a { color: var(--ink); text-decoration: none; transition: color .15s ease; }
+a:hover { color: var(--accent); }
+
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ─── header ─── */
+.site-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(160%) blur(6px);
+}
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  padding-bottom: 18px;
+  gap: 24px;
+}
+.brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.brand-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -.01em;
+  color: var(--ink);
+}
+.brand-subtitle {
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--ink-fade);
+  margin-top: 4px;
+  letter-spacing: .02em;
+}
+.site-nav {
+  display: flex;
+  gap: 22px;
+  font-family: var(--sans);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.site-nav a {
+  color: var(--ink-soft);
+  padding: 6px 2px;
+  border-bottom: 2px solid transparent;
+}
+.site-nav a:hover { color: var(--accent); border-bottom-color: var(--accent-soft); }
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 4px 14px;
+  border-radius: 4px;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+
+.edit-toggle {
+  background: none;
+  border: 1px solid var(--rule);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--sans);
+  cursor: pointer;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  transition: all .15s ease;
+}
+.edit-toggle:hover { border-color: var(--accent-soft); color: var(--accent); }
+.edit-toggle.on {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ─── edit mode visuals ─── */
+body.edit-mode [data-edit] {
+  outline: 1px dashed transparent;
+  outline-offset: 4px;
+  transition: outline-color .12s ease, background .12s ease;
+  border-radius: 2px;
+  cursor: text;
+}
+body.edit-mode [data-edit]:hover  { outline-color: var(--accent-soft); }
+body.edit-mode [data-edit]:focus  {
+  outline: 2px solid var(--accent);
+  background: #fff8ec;
+}
+body.edit-mode [data-edit]:empty::before {
+  content: '클릭해 입력…';
+  color: var(--ink-fade);
+  font-style: italic;
+}
+
+.mark-verified {
+  margin-left: 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 12px;
+  cursor: pointer;
+}
+.mark-verified:hover { opacity: .9; }
+
+.edit-help {
+  display: none;
+  background: #fff4d9;
+  border-bottom: 1px solid #e0c75e;
+  color: #5c4500;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  padding: 10px 16px;
+  line-height: 1.6;
+}
+.edit-help kbd {
+  background: #fff;
+  border: 1px solid #c9a83c;
+  border-radius: 3px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.edit-help em { color: var(--accent); font-style: normal; font-weight: 700; }
+body.edit-mode .edit-help { display: block; }
+
+/* save toast */
+.save-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: #1f2c3a;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+.save-toast.show { opacity: 1; transform: translateY(0); }
+.save-toast.err { background: #8a2a1d; }
+
+/* ─── main ─── */
+.app-main {
+  flex: 1;
+  padding: 48px 0 80px;
+}
+.loading {
+  text-align: center;
+  color: var(--ink-fade);
+  padding: 80px 0;
+  font-family: var(--sans);
+}
+
+/* ─── footer ─── */
+.site-footer {
+  border-top: 1px solid var(--rule);
+  background: var(--paper-deep);
+  padding: 32px 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-fade);
+  text-align: center;
+}
+.site-footer p { margin: 4px 0; }
+.site-footer .copy { font-size: 11.5px; opacity: .8; }
+
+/* ===================================================================
+   HOME
+   =================================================================== */
+.hero {
+  text-align: center;
+  padding: 24px 0 56px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 56px;
+}
+.hero-eyebrow {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: .25em;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+}
+.hero-subtitle {
+  font-family: var(--sans);
+  margin-top: 18px;
+  color: var(--ink-soft);
+  font-size: 15.5px;
+}
+.hero-quote {
+  margin-top: 32px;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--ink-soft);
+  font-style: italic;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 28px;
+}
+.section-head h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -.005em;
+}
+.section-head .more {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--ink-fade);
+}
+.section-head .more:hover { color: var(--accent); }
+
+.featured-poem {
+  background: var(--paper-deep);
+  padding: 48px 32px;
+  text-align: center;
+  margin-bottom: 64px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+}
+.featured-poem .meta {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  letter-spacing: .15em;
+  color: var(--ink-fade);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.featured-poem h3 {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.featured-poem .poet {
+  font-family: var(--serif);
+  color: var(--ink-soft);
+  font-size: 14.5px;
+  margin-bottom: 22px;
+}
+.featured-poem .excerpt {
+  white-space: pre-line;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink);
+  line-height: 1.85;
+  max-width: 480px;
+  margin: 0 auto 22px;
+}
+.featured-poem .read-more {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent-soft);
+  padding-bottom: 2px;
+}
+
+/* season grid (4) */
+.season-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 64px;
+}
+.season-card {
+  display: block;
+  padding: 28px 20px;
+  text-align: center;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.season-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+.season-card .name { font-family: var(--display); font-size: 26px; font-weight: 700; }
+.season-card .count { font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade); margin-top: 6px; }
+.season-card.spring  { background: var(--spring-bg); border-color: var(--spring); }
+.season-card.summer  { background: var(--summer-bg); border-color: var(--summer); }
+.season-card.autumn  { background: var(--autumn-bg); border-color: var(--autumn); }
+.season-card.winter  { background: var(--winter-bg); border-color: var(--winter); }
+.season-card.spring  .name { color: var(--spring);  }
+.season-card.summer  .name { color: var(--summer);  }
+.season-card.autumn  .name { color: var(--autumn);  }
+.season-card.winter  .name { color: var(--winter);  }
+
+/* recent list */
+.recent-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.recent-card {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 22px;
+  border-radius: 4px;
+  transition: border-color .15s ease;
+}
+.recent-card:hover { border-color: var(--accent-soft); }
+.recent-card .meta {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: var(--ink-fade);
+  margin-bottom: 10px;
+}
+.recent-card .title {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+.recent-card .poet {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* ===================================================================
+   EXHIBIT (이 달의 특별 전시실)
+   =================================================================== */
+.exhibit-section {
+  margin: 0 auto 72px;
+  padding: 0;
+}
+.exhibit-eyebrow {
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: .35em;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 18px;
+  font-weight: 700;
+}
+.exhibit-card {
+  background: linear-gradient(180deg, #fefcf6, var(--paper-deep));
+  border: 1px solid var(--accent-soft);
+  border-radius: 6px;
+  padding: 64px 36px 56px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 8px 28px rgba(138,58,44,.08);
+}
+.exhibit-card::before, .exhibit-card::after {
+  content: ''; position: absolute; width: 36px; height: 1px; background: var(--accent-soft);
+  top: 30px;
+}
+.exhibit-card::before { left: 36px; }
+.exhibit-card::after  { right: 36px; }
+.exhibit-meta {
+  font-family: var(--sans); font-size: 12.5px; letter-spacing: .2em;
+  color: var(--ink-fade); text-transform: uppercase; margin-bottom: 18px;
+}
+.exhibit-title {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(34px, 5vw, 44px); letter-spacing: -.01em;
+  line-height: 1.2; margin-bottom: 14px;
+}
+.exhibit-poet {
+  font-family: var(--serif); font-size: 16px; color: var(--ink-soft); margin-bottom: 32px;
+}
+.exhibit-poet::before { content: '— '; }
+.exhibit-poet::after  { content: ' —'; }
+.exhibit-excerpt {
+  white-space: pre-wrap; font-family: var(--serif);
+  font-size: 18px; line-height: 2; color: var(--ink); margin: 0 auto 32px;
+  max-width: 520px;
+}
+.exhibit-cta {
+  display: inline-block; font-family: var(--sans); font-size: 14px;
+  background: var(--accent); color: #fff !important;
+  padding: 11px 26px; border-radius: 4px; letter-spacing: .03em;
+}
+.exhibit-cta:hover { background: #6d2d22; }
+
+.exhibit-comments {
+  margin-top: 28px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 22px 26px;
+}
+.exhibit-comments-label {
+  font-family: var(--sans); font-size: 12.5px; letter-spacing: .15em;
+  color: var(--accent); font-weight: 700; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.exhibit-comments-list .comment-mini {
+  padding: 10px 0; border-bottom: 1px dotted var(--rule);
+  font-family: var(--serif); font-size: 14.5px;
+  display: flex; gap: 14px; align-items: baseline;
+}
+.exhibit-comments-list .comment-mini:last-child { border-bottom: none; }
+.exhibit-comments-list .cm-name {
+  font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade);
+  min-width: 84px; flex-shrink: 0;
+}
+.exhibit-comments-list .comment-mini.teacher .cm-name { color: var(--accent); font-weight: 700; }
+.exhibit-comments-list .cm-body { color: var(--ink-soft); }
+.exhibit-comments-more {
+  display: block; margin-top: 14px; font-family: var(--sans); font-size: 12.5px;
+  color: var(--ink-fade); text-align: right;
+}
+.exhibit-comments-more:hover { color: var(--accent); }
+
+.empty-note {
+  font-family: var(--sans); font-size: 13px; color: var(--ink-fade);
+  font-style: italic; text-align: center; padding: 16px 0;
+}
+.empty-note.err { color: #a33; font-style: normal; }
+
+.static-note {
+  background: var(--paper-deep);
+  border: 1px dashed var(--accent-soft);
+  border-radius: 4px;
+  padding: 22px 26px;
+  margin: 24px 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+/* ── 계절의 방 (랜덤 1편 × 4계절) ──────────────────── */
+.season-random-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.season-random-card {
+  display: flex; flex-direction: column;
+  padding: 22px 20px 24px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  min-height: 180px;
+  transition: opacity .22s ease, transform .22s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.season-random-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
+}
+.season-random-card.fading { opacity: 0; transform: translateY(4px); }
+
+.season-random-card.spring { background: var(--spring-bg); border-color: var(--spring); }
+.season-random-card.summer { background: var(--summer-bg); border-color: var(--summer); }
+.season-random-card.autumn { background: var(--autumn-bg); border-color: var(--autumn); }
+.season-random-card.winter { background: var(--winter-bg); border-color: var(--winter); }
+
+.srn-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid currentColor;
+}
+.season-random-card.spring .srn-head { border-color: var(--spring); color: var(--spring); }
+.season-random-card.summer .srn-head { border-color: var(--summer); color: var(--summer); }
+.season-random-card.autumn .srn-head { border-color: var(--autumn); color: var(--autumn); }
+.season-random-card.winter .srn-head { border-color: var(--winter); color: var(--winter); }
+.srn-name { font-family: var(--display); font-weight: 700; font-size: 17px; }
+.srn-count { font-family: var(--sans); font-size: 11.5px; opacity: .7; }
+.srn-title {
+  font-family: var(--display); font-weight: 700;
+  font-size: 18px; line-height: 1.35;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.srn-poet {
+  font-family: var(--serif); font-size: 13.5px;
+  color: var(--ink-soft);
+  margin-bottom: auto;
+  padding-bottom: 10px;
+}
+.srn-date {
+  font-family: var(--sans); font-size: 11.5px;
+  color: var(--ink-fade); letter-spacing: .1em;
+}
+
+.season-shuffle-btn {
+  font-size: 13px;
+  padding: 7px 14px;
+}
+
+@media (max-width: 880px) {
+  .season-random-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .season-random-grid { grid-template-columns: 1fr; }
+}
+
+/* ── 지난 전시 — 카탈로그 형식 ─────────────────────── */
+.recent-catalog {
+  list-style: none;
+  border-top: 1px solid var(--ink);
+}
+.catalog-row {
+  display: grid;
+  grid-template-columns: 84px 60px 1fr 140px 24px;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--rule);
+  transition: background .12s ease;
+}
+.catalog-row:hover { background: var(--paper-deep); }
+.cat-date {
+  font-family: var(--sans); font-size: 12.5px;
+  letter-spacing: .08em; color: var(--ink-fade);
+}
+.cat-season {
+  font-family: var(--sans); font-size: 11.5px;
+  text-align: center; padding: 2px 0;
+  border-radius: 10px; font-weight: 700;
+  letter-spacing: .05em;
+  background: var(--paper-deep);
+}
+.cat-season-spring { background: var(--spring-bg); color: var(--spring); }
+.cat-season-summer { background: var(--summer-bg); color: var(--summer); }
+.cat-season-autumn { background: var(--autumn-bg); color: var(--autumn); }
+.cat-season-winter { background: var(--winter-bg); color: var(--winter); }
+.cat-title {
+  font-family: var(--display); font-weight: 700; font-size: 17px;
+  color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cat-poet {
+  font-family: var(--serif); font-size: 13.5px;
+  color: var(--ink-soft);
+  text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cat-arrow {
+  font-family: var(--sans); font-size: 14px;
+  color: var(--ink-fade); text-align: right;
+  transition: transform .15s ease, color .15s ease;
+}
+.catalog-row:hover .cat-arrow { color: var(--accent); transform: translateX(3px); }
+
+@media (max-width: 640px) {
+  .catalog-row {
+    grid-template-columns: 70px 1fr 24px;
+    grid-template-areas:
+      'date    title  arrow'
+      'season  poet   .';
+    gap: 6px 12px;
+  }
+  .cat-date   { grid-area: date; }
+  .cat-season { grid-area: season; justify-self: start; padding: 1px 8px; }
+  .cat-title  { grid-area: title; font-size: 16px; }
+  .cat-poet   { grid-area: poet; text-align: left; }
+  .cat-arrow  { grid-area: arrow; }
+}
+
+/* ── 시인 인덱스 카테고리 ─────────────────────────── */
+.poets-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.poets-head h1 { margin-bottom: 6px; }
+.poets-head .poets-intro { margin-bottom: 0; }
+.sort-toggle {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-deep);
+  padding: 3px;
+}
+.sort-opt {
+  border: none; background: transparent;
+  padding: 6px 14px;
+  font-family: var(--sans); font-size: 13px;
+  color: var(--ink-fade);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background .15s ease, color .15s ease;
+}
+.sort-opt:hover { color: var(--ink); }
+.sort-opt.on {
+  background: var(--accent); color: #fff;
+  font-weight: 500;
+}
+
+.poet-group { margin-bottom: 44px; }
+.poet-group-title {
+  font-family: var(--display); font-weight: 700; font-size: 19px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px; margin-bottom: 18px;
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.poet-group-count {
+  font-family: var(--sans); font-size: 12.5px;
+  color: var(--ink-fade); font-weight: 400;
+}
+
+/* ── 특별 전시실 (랜덤 2편) ─────────────────────────── */
+.random-exhibit {
+  margin: 64px 0 56px;
+  padding: 40px 32px;
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.random-exhibit-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; margin-bottom: 24px;
+}
+.random-exhibit-head .exhibit-eyebrow {
+  text-align: left; margin-bottom: 6px;
+}
+.random-exhibit-sub {
+  font-family: var(--sans); font-size: 13px; color: var(--ink-fade);
+}
+.shuffle-btn {
+  background: var(--accent); color: #fff; border: none;
+  padding: 11px 22px; border-radius: 4px;
+  font-family: var(--sans); font-size: 14px; cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s ease, transform .15s ease;
+  box-shadow: 0 2px 8px rgba(138,58,44,.18);
+}
+.shuffle-btn:hover { background: #6d2d22; transform: translateY(-1px); }
+.shuffle-btn:active { transform: translateY(0); }
+
+.random-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.random-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 28px 24px;
+  display: flex; flex-direction: column;
+  min-height: 280px;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.random-card:hover {
+  border-color: var(--accent-soft);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+}
+.random-meta {
+  font-family: var(--sans); font-size: 12px;
+  letter-spacing: .12em; color: var(--ink-fade);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.random-title {
+  font-family: var(--display); font-weight: 700; font-size: 22px;
+  line-height: 1.3; margin-bottom: 6px;
+}
+.random-poet {
+  font-family: var(--serif); font-size: 13.5px;
+  color: var(--ink-soft); margin-bottom: 16px;
+}
+.random-excerpt {
+  white-space: pre-line;
+  font-family: var(--serif); font-size: 14px;
+  line-height: 1.85; color: var(--ink-soft);
+  flex: 1; margin: 0 0 14px;
+}
+.random-cta {
+  font-family: var(--sans); font-size: 12.5px;
+  color: var(--accent); text-align: right;
+  margin-top: auto;
+}
+
+@media (max-width: 880px) {
+  .random-pair { grid-template-columns: 1fr; }
+  .random-exhibit-head { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 640px) {
+  .random-exhibit { padding: 28px 20px; }
+}
+
+/* CTA strip (방명록 + 편지) */
+.cta-strip {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin-top: 56px;
+}
+.cta-card {
+  border: 1px solid var(--rule); background: var(--paper);
+  padding: 28px 24px; border-radius: 4px; text-align: center;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.cta-card:hover { border-color: var(--accent-soft); transform: translateY(-2px); }
+.cta-icon { font-size: 28px; margin-bottom: 10px; }
+.cta-title { font-family: var(--display); font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+.cta-desc { font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade); }
+
+@media (max-width: 640px) {
+  .cta-strip { grid-template-columns: 1fr; }
+  .exhibit-card { padding: 40px 22px 36px; }
+  .exhibit-card::before, .exhibit-card::after { display: none; }
+}
+
+/* ===================================================================
+   생각의 방 (Thoughts Rooms)
+   =================================================================== */
+.thoughts-page h1 {
+  font-family: var(--display); font-weight: 800; font-size: 36px; margin-bottom: 8px;
+}
+.thoughts-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 24px; margin-bottom: 32px; flex-wrap: wrap;
+}
+.thoughts-head .page-intro { margin-bottom: 0; max-width: 640px; }
+
+.thoughts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+.thought-card {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 24px 22px 64px;
+  min-height: 260px;
+  display: flex; flex-direction: column;
+  transition: opacity .22s ease, transform .22s ease, border-color .15s ease;
+}
+.thought-card:hover { border-color: var(--accent-soft); }
+.thought-card.fading { opacity: 0; transform: translateY(4px); }
+
+.thought-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.thought-icon { font-size: 18px; }
+.thought-key {
+  font-family: var(--display); font-weight: 700; font-size: 19px;
+  color: var(--accent);
+}
+.thought-count {
+  margin-left: auto;
+  font-family: var(--sans); font-size: 11.5px;
+  color: var(--ink-fade); letter-spacing: .05em;
+}
+.thought-body-wrap { flex: 1; }
+.thought-body {
+  font-family: var(--serif); font-size: 14.5px; line-height: 1.8;
+  color: var(--ink-soft); white-space: pre-wrap;
+}
+.thought-source {
+  margin-top: 16px;
+}
+.thought-source-link {
+  font-family: var(--sans); font-size: 12.5px;
+  color: var(--ink-fade);
+  border-bottom: 1px dotted var(--rule);
+  padding-bottom: 1px;
+}
+.thought-source-link:hover { color: var(--accent); border-bottom-color: var(--accent-soft); }
+
+.thought-shuffle-mini {
+  position: absolute; right: 16px; bottom: 16px;
+  background: none; border: 1px solid var(--rule);
+  width: 32px; height: 32px; border-radius: 16px;
+  font-size: 14px; cursor: pointer; color: var(--ink-fade);
+  transition: all .15s ease;
+}
+.thought-shuffle-mini:hover {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  transform: rotate(180deg);
+}
+
+.thoughts-note {
+  margin-top: 36px;
+  font-family: var(--sans); font-size: 12px;
+  color: var(--ink-fade); text-align: center;
+}
+
+@media (max-width: 880px) {
+  .thoughts-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .thoughts-grid { grid-template-columns: 1fr; }
+  .thoughts-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* ===================================================================
+   COMMENTS (관람객 일기장) — 시 상세 페이지
+   =================================================================== */
+.comments-section {
+  margin: 64px auto 48px;
+  max-width: var(--reading-width);
+}
+.comments-title {
+  font-family: var(--display); font-weight: 700; font-size: 22px;
+  border-bottom: 1px solid var(--rule); padding-bottom: 10px; margin-bottom: 8px;
+}
+.comments-sub {
+  font-family: var(--sans); font-size: 13px; color: var(--ink-fade);
+  margin-bottom: 22px;
+}
+
+.comment-form {
+  background: var(--paper-deep); border: 1px solid var(--rule);
+  border-radius: 4px; padding: 18px 20px; margin-bottom: 28px;
+}
+.comment-form .form-row {
+  display: flex; gap: 12px; align-items: center; margin-bottom: 10px;
+}
+.comment-form input[type="text"], .comment-form textarea,
+.guestbook-form input, .guestbook-form textarea,
+.letter-form input, .letter-form textarea {
+  font-family: var(--serif); font-size: 14px;
+  border: 1px solid var(--rule); background: #fff;
+  padding: 8px 12px; border-radius: 3px; box-sizing: border-box;
+}
+.comment-form input[type="text"] { width: 100%; margin-bottom: 8px; }
+.guestbook-form input[type="text"] { width: 100%; margin-bottom: 8px; }
+.comment-form textarea, .guestbook-form textarea, .letter-form textarea {
+  width: 100%; resize: vertical; min-height: 60px; line-height: 1.6;
+}
+
+.btn-primary {
+  background: var(--accent); color: #fff; border: none;
+  padding: 8px 18px; border-radius: 3px; font-family: var(--sans);
+  font-size: 13px; cursor: pointer;
+}
+.btn-primary:hover { background: #6d2d22; }
+.form-status { font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade); }
+.form-status.ok  { color: #2e6b2e; }
+.form-status.err { color: #a33; }
+.parent-indicator {
+  background: #fff; border: 1px dashed var(--accent-soft);
+  padding: 6px 10px; border-radius: 3px; margin-bottom: 10px;
+  font-family: var(--sans); font-size: 12.5px; color: var(--accent);
+}
+.parent-indicator .cancel { margin-left: 10px; color: var(--ink-fade); text-decoration: underline; }
+
+.comment {
+  border-top: 1px solid var(--rule); padding: 16px 0;
+}
+.comment-head {
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade);
+  margin-bottom: 6px;
+}
+.comment-name { font-weight: 700; color: var(--ink-soft); font-size: 13.5px; }
+.comment.teacher .comment-name { color: var(--accent); }
+.comment.teacher { background: linear-gradient(90deg, #fff8ee, transparent); padding-left: 14px; border-left: 3px solid var(--accent); }
+.comment-body {
+  font-family: var(--serif); font-size: 15px; line-height: 1.75;
+  color: var(--ink); white-space: pre-wrap;
+}
+.comment-reply, .comment-del {
+  margin-top: 8px; background: none; border: none; cursor: pointer;
+  font-family: var(--sans); font-size: 12px; color: var(--ink-fade);
+  padding: 2px 0;
+}
+.comment-reply:hover { color: var(--accent); }
+.comment-del { margin-left: auto; color: #a33; }
+.comment-children { margin-left: 22px; }
+.comment.reply { background: #fbf8f1; padding: 12px 14px; border-radius: 3px; border-top: none; margin-top: 8px; }
+.comment.reply.teacher { background: #fff4e0; }
+
+/* ===================================================================
+   GUESTBOOK
+   =================================================================== */
+.guestbook-page h1, .letter-page h1, .poets-page h1, .archive-page h1 {
+  font-family: var(--display); font-weight: 800; font-size: 32px; margin-bottom: 8px;
+}
+.page-intro {
+  font-family: var(--sans); font-size: 14.5px; color: var(--ink-soft); margin-bottom: 32px;
+}
+.guestbook-form, .letter-form {
+  background: var(--paper-deep); border: 1px solid var(--rule);
+  border-radius: 4px; padding: 22px 24px; margin-bottom: 36px;
+}
+.guestbook-form .form-row, .letter-form .form-row {
+  display: flex; gap: 12px; align-items: center; margin-bottom: 12px;
+}
+.guestbook-form input[type="text"] { flex: 1; }
+
+.guestbook-list { display: flex; flex-direction: column; gap: 14px; }
+.gb-entry {
+  border: 1px solid var(--rule); background: var(--paper);
+  padding: 16px 20px; border-radius: 4px;
+}
+.gb-entry.teacher { background: #fff8ee; border-color: var(--accent-soft); }
+.gb-head {
+  display: flex; align-items: baseline; gap: 12px;
+  font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade);
+  margin-bottom: 8px;
+}
+.gb-name { font-weight: 700; color: var(--ink-soft); font-size: 13.5px; }
+.gb-entry.teacher .gb-name { color: var(--accent); }
+.gb-email { color: var(--ink-fade); font-size: 12px; }
+.gb-body {
+  font-family: var(--serif); font-size: 15px; line-height: 1.75;
+  white-space: pre-wrap; color: var(--ink);
+}
+.gb-del { margin-left: auto; background: none; border: none; color: #a33; font-size: 12px; cursor: pointer; font-family: var(--sans); }
+
+/* letter page */
+.letter-form label {
+  display: block; font-family: var(--sans); font-size: 13px;
+  color: var(--ink-soft); margin-bottom: 14px;
+}
+.letter-form input, .letter-form textarea { width: 100%; margin-top: 6px; }
+.letter-form input[type="email"] { font-family: var(--sans); }
+.inbox-link {
+  margin-left: 12px; font-family: var(--sans); font-size: 13px; color: var(--accent);
+  border-bottom: 1px solid var(--accent-soft);
+}
+.inbox-item {
+  border: 1px solid var(--rule); background: var(--paper-deep);
+  padding: 18px 22px; border-radius: 4px; margin-bottom: 14px;
+}
+
+/* ===================================================================
+   SEASON ROOM
+   =================================================================== */
+.season-page {
+  padding-top: 8px;
+}
+.season-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 36px;
+  overflow-x: auto;
+}
+.season-tab {
+  font-family: var(--display);
+  font-size: 18px;
+  padding: 12px 18px;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  color: var(--ink-fade);
+  font-weight: 700;
+}
+.season-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+.season-banner {
+  padding: 56px 32px;
+  border-radius: 6px;
+  margin-bottom: 40px;
+  text-align: center;
+  border: 1px solid var(--rule);
+}
+.season-banner.spring  { background: var(--spring-bg);  border-color: var(--spring); }
+.season-banner.summer  { background: var(--summer-bg);  border-color: var(--summer); }
+.season-banner.autumn  { background: var(--autumn-bg);  border-color: var(--autumn); }
+.season-banner.winter  { background: var(--winter-bg);  border-color: var(--winter); }
+.season-banner h2 {
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+.season-banner .desc {
+  font-family: var(--sans);
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  margin-top: 10px;
+}
+
+.poem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+.poem-card {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 24px 22px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.poem-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-soft);
+}
+.poem-card .meta {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--ink-fade);
+  margin-bottom: 10px;
+}
+.poem-card .title {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.poem-card .poet {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-top: auto;
+}
+
+/* ===================================================================
+   ARCHIVE (year-based)
+   =================================================================== */
+.archive-page h1 {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.archive-intro {
+  font-family: var(--sans);
+  color: var(--ink-soft);
+  margin-bottom: 40px;
+  font-size: 15px;
+}
+.year-block { margin-bottom: 48px; }
+.year-block h2 {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.year-block h2 .count {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-fade);
+  font-weight: 400;
+}
+.year-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 32px;
+}
+.year-list li a {
+  display: grid;
+  grid-template-columns: 56px 1fr 100px;
+  gap: 16px;
+  padding: 10px 4px;
+  border-bottom: 1px dotted var(--rule);
+  align-items: baseline;
+}
+.year-list li a:hover { background: var(--paper-deep); }
+.year-list .month { font-family: var(--sans); font-size: 13px; color: var(--ink-fade); letter-spacing: .05em; }
+.year-list .title { font-family: var(--display); font-weight: 700; font-size: 16px; }
+.year-list .poet  { font-family: var(--serif); font-size: 13.5px; color: var(--ink-soft); text-align: right; }
+
+/* ===================================================================
+   POETS INDEX
+   =================================================================== */
+.poets-page h1 {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.poets-intro {
+  font-family: var(--sans);
+  color: var(--ink-soft);
+  margin-bottom: 40px;
+  font-size: 15px;
+}
+.poets-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 24px;
+}
+.poets-grid a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 4px;
+  border-bottom: 1px dotted var(--rule);
+  font-family: var(--serif);
+}
+.poets-grid a:hover { background: var(--paper-deep); }
+.poets-grid .name { font-size: 15.5px; font-weight: 500; }
+.poets-grid .count { font-family: var(--sans); font-size: 12px; color: var(--ink-fade); }
+
+/* poet detail */
+.poet-page h1 {
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.poet-page .poet-meta {
+  font-family: var(--sans);
+  color: var(--ink-fade);
+  font-size: 14px;
+  margin-bottom: 36px;
+}
+.poet-list {
+  list-style: none;
+}
+.poet-list li {
+  border-bottom: 1px solid var(--rule);
+}
+.poet-list li a {
+  display: grid;
+  grid-template-columns: 110px 1fr 80px;
+  gap: 18px;
+  padding: 16px 4px;
+  align-items: baseline;
+}
+.poet-list li a:hover { background: var(--paper-deep); }
+.poet-list .date { font-family: var(--sans); font-size: 13px; color: var(--ink-fade); letter-spacing: .05em; }
+.poet-list .title { font-family: var(--display); font-weight: 700; font-size: 17px; }
+.poet-list .season { font-family: var(--sans); font-size: 12px; color: var(--ink-fade); text-align: right; }
+
+/* ===================================================================
+   POEM DETAIL
+   =================================================================== */
+.poem-page {
+  max-width: var(--reading-width);
+  margin: 0 auto;
+}
+.poem-back {
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-fade);
+  margin-bottom: 24px;
+  display: inline-block;
+}
+.poem-back:hover { color: var(--accent); }
+
+.poem-meta-bar {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  letter-spacing: .2em;
+  color: var(--ink-fade);
+  text-transform: uppercase;
+  text-align: center;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 14px;
+  margin-bottom: 36px;
+}
+.poem-meta-bar .season-chip {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 12px;
+  margin-left: 10px;
+  letter-spacing: .1em;
+  font-weight: 700;
+}
+.poem-meta-bar .season-chip.spring { background: var(--spring-bg); color: var(--spring); }
+.poem-meta-bar .season-chip.summer { background: var(--summer-bg); color: var(--summer); }
+.poem-meta-bar .season-chip.autumn { background: var(--autumn-bg); color: var(--autumn); }
+.poem-meta-bar .season-chip.winter { background: var(--winter-bg); color: var(--winter); }
+
+.poem-title {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: -.01em;
+  line-height: 1.25;
+  margin-bottom: 14px;
+}
+.poem-poet {
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink-soft);
+  margin-bottom: 56px;
+}
+.poem-poet::before { content: "— "; }
+.poem-poet::after { content: " —"; }
+
+.verify-notice {
+  background: #fff6e0;
+  border: 1px solid #e6c66a;
+  color: #8a5a00;
+  padding: 12px 18px;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  text-align: center;
+  margin: 0 auto 24px;
+  max-width: 560px;
+}
+
+.poem-body {
+  white-space: pre-wrap;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 2.05;
+  color: var(--ink);
+  margin: 0 auto 64px;
+  max-width: 560px;
+}
+
+.poem-commentary-wrap {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 36px 0;
+  margin-bottom: 36px;
+  background: var(--paper-deep);
+  margin-left: -24px;
+  margin-right: -24px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+.poem-commentary-label {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: .25em;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 22px;
+  font-weight: 700;
+}
+.poem-commentary {
+  white-space: pre-wrap;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.95;
+  color: var(--ink-soft);
+  text-indent: 0;
+}
+
+.poem-signature {
+  font-family: var(--serif);
+  font-size: 13.5px;
+  color: var(--ink-fade);
+  text-align: right;
+  margin-bottom: 56px;
+  font-style: italic;
+  /* 한 줄로 표시: 길어도 줄바꿈하지 않고 좌우로만 자연스럽게 흐름 */
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+}
+.poem-signature::before { content: "— "; }
+.poem-signature::-webkit-scrollbar { height: 4px; }
+.poem-signature::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 2px; }
+/* if empty, hide it */
+.poem-signature:empty { display: none; }
+.poem-signature:empty::before { content: none; }
+
+.poem-nav {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--rule);
+  padding-top: 24px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+}
+.poem-nav .nav-prev,
+.poem-nav .nav-next {
+  display: flex;
+  flex-direction: column;
+  max-width: 45%;
+  color: var(--ink-soft);
+}
+.poem-nav .label { font-size: 11.5px; color: var(--ink-fade); letter-spacing: .15em; margin-bottom: 4px; }
+.poem-nav .title-mini { font-family: var(--display); font-weight: 700; font-size: 15px; }
+.poem-nav .nav-next { text-align: right; align-items: flex-end; }
+
+/* ===================================================================
+   ABOUT
+   =================================================================== */
+.about-page {
+  max-width: var(--reading-width);
+  margin: 0 auto;
+}
+.about-page h1 {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 28px;
+}
+.about-page p {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  line-height: 2;
+  margin-bottom: 22px;
+  color: var(--ink-soft);
+}
+.about-page p strong { color: var(--ink); }
+.about-page .stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 32px 0 40px;
+}
+.about-page .stat {
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  padding: 22px 16px;
+  text-align: center;
+  border-radius: 4px;
+}
+.about-page .stat .num { font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--accent); }
+.about-page .stat .label { font-family: var(--sans); font-size: 12.5px; color: var(--ink-fade); margin-top: 4px; letter-spacing: .05em; }
+
+/* ===================================================================
+   responsive
+   =================================================================== */
+@media (max-width: 880px) {
+  .recent-list, .poem-grid { grid-template-columns: repeat(2, 1fr); }
+  .poets-grid { grid-template-columns: repeat(2, 1fr); }
+  .year-list { grid-template-columns: 1fr; }
+  .about-page .stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .recent-list, .poem-grid { grid-template-columns: 1fr; }
+  .season-grid { grid-template-columns: repeat(2, 1fr); }
+  .site-nav {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    flex-direction: column;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 14px 22px;
+    display: none;
+    border-radius: 4px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.06);
+  }
+  .site-nav.open { display: flex; }
+  .nav-toggle { display: inline-block; }
+  .poem-title { font-size: 30px; }
+  .poem-body { font-size: 17px; }
+  .poem-commentary-wrap { margin-left: -16px; margin-right: -16px; padding: 28px 22px; }
+  .container { padding: 0 16px; }
+  .featured-poem { padding: 32px 18px; }
+}

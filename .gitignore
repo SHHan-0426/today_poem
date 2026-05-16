@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# 백업 (로컬 전용 — 변경 시 자동 생성됨)
+data/backups/
+
+# 사생활 — 받은 편지(로컬에만)
+data/messages.json
+
+# 로그·임시파일
+*.log
+*.tmp
+nohup.out
+
+# 검수용 보조 파일
+data/poems_index.csv
+
+# 에디터 잡파일
+.vscode/
+.idea/
+*.swp
