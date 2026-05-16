@@ -718,112 +718,86 @@
     });
   }
 
-  // ─── 생각의 방 (선생님 단상을 키워드별로) ─────────────────
+  // ─── 생각의 방 (단상을 키워드별로 — 칩 위 / 단상 한 편 아래) ──────
   function renderThoughts() {
     const rooms = THOUGHTS.filter((t) => state.byThought[t.key]?.length > 0);
+    const saved = localStorage.getItem('thoughtCurrent');
+    const currentKey = (rooms.find((r) => r.key === saved) ? saved : rooms[0]?.key) || rooms[0]?.key;
 
     app.innerHTML = `
       <div class="container thoughts-page">
-        <div class="thoughts-head">
-          <div>
-            <h1>생각의 방</h1>
-            <p class="page-intro">
-              선생님께서 시 옆에 덧붙이신 단상을, 일상의 화두별로 묶어 작은 방들로 만들었습니다.
-              각 방마다 한 편의 단상이 머물러 있고, 셔플하시면 다른 생각이 찾아옵니다.
-            </p>
-          </div>
-          <button class="shuffle-btn" id="thoughts-shuffle" type="button">🔀 모두 새로 보기</button>
-        </div>
+        <h1>생각의 방</h1>
+        <p class="page-intro">
+          주제를 골라 그 안의 한 단상을 만나 보세요. 다른 글을 보고 싶으면 ↻ 단추를 눌러 주세요.
+        </p>
 
-        <div class="thoughts-grid" id="thoughts-grid">
+        <div class="thought-chips" id="thought-chips">
           ${rooms.map((t) => `
-            <article class="thought-card" data-key="${t.key}">
-              <div class="thought-head">
-                <span class="thought-icon">${t.icon}</span>
-                <span class="thought-key">${t.key}</span>
-                <span class="thought-count">${state.byThought[t.key].length}편</span>
-              </div>
-              <div class="thought-body-wrap">
-                <div class="thought-body"></div>
-              </div>
-              <div class="thought-source">
-                <a class="thought-source-link" href="#"></a>
-              </div>
-              <button class="thought-shuffle-mini" data-key="${t.key}" title="이 방만 새로 보기">↻</button>
-            </article>
+            <button class="t-chip ${t.key === currentKey ? 'on' : ''}"
+                    data-key="${t.key}" type="button">
+              <span class="t-chip-ico">${t.icon}</span>
+              <span class="t-chip-name">${t.key}</span>
+              <span class="t-chip-count">${state.byThought[t.key].length}</span>
+            </button>
           `).join('')}
         </div>
 
-        <p class="thoughts-note">
-          ※ 키워드는 단상 안의 단어들을 자동으로 묶은 것입니다. 한 단상이 여러 방에 동시에 머무를 수 있습니다.
-        </p>
+        <div class="thought-panel" id="thought-panel"></div>
       </div>
     `;
 
-    // 초기 채우기
-    rooms.forEach((t) => fillThoughtCard(t.key));
+    showThoughtPanel(currentKey, false);
 
-    // 전체 셔플
-    document.getElementById('thoughts-shuffle').addEventListener('click', () => {
-      shuffleAllThoughts();
-    });
-    // 방별 셔플
-    document.querySelectorAll('.thought-shuffle-mini').forEach((btn) => {
-      btn.addEventListener('click', () => fadeAndFill(btn.dataset.key));
+    document.querySelectorAll('.t-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const k = btn.dataset.key;
+        if (document.querySelector('.t-chip.on')?.dataset.key === k) {
+          // 이미 선택된 칩 다시 누르면 셔플
+          showThoughtPanel(k, true);
+          return;
+        }
+        document.querySelectorAll('.t-chip').forEach((b) => b.classList.toggle('on', b.dataset.key === k));
+        localStorage.setItem('thoughtCurrent', k);
+        showThoughtPanel(k, true);
+      });
     });
   }
 
-  function fillThoughtCard(key, animate = false) {
-    const card = document.querySelector(`.thought-card[data-key="${CSS.escape(key)}"]`);
-    if (!card) return;
+  function showThoughtPanel(key, animate) {
+    const panel = document.getElementById('thought-panel');
+    if (!panel) return;
     const pool = state.byThought[key] || [];
-    if (!pool.length) return;
+    if (!pool.length) {
+      panel.innerHTML = `<div class="empty-note">이 방엔 아직 글이 없습니다.</div>`;
+      return;
+    }
     const e = pool[Math.floor(Math.random() * pool.length)];
-
-    // 단상에서 키워드 첫 등장 부근을 발췌 (있는 그대로)
-    const thought = THOUGHTS.find((t) => t.key === key);
-    const excerpt = commentaryExcerpt(e.commentary, thought?.words || [], 180);
-
-    const bodyEl = card.querySelector('.thought-body');
-    const linkEl = card.querySelector('.thought-source-link');
+    const thought = THOUGHTS.find((t) => t.key === key) || {icon:'·', key};
+    const excerpt = commentaryExcerpt(e.commentary, thought.words || [], 400);
 
     const apply = () => {
-      bodyEl.textContent = excerpt;
-      linkEl.textContent = `${e.year}.${e.month} 「${e.title}」 / ${e.poet || '작자미상'}`;
-      linkEl.setAttribute('href', poemLink(e));
+      panel.innerHTML = `
+        <div class="tp-head">
+          <span class="tp-ico">${thought.icon}</span>
+          <span class="tp-name">${escapeHtml(key)}</span>
+          <span class="tp-count">${pool.length}편 중에서</span>
+          <button class="tp-shuffle" type="button" title="이 방에서 다른 단상 보기">↻ 다른 글</button>
+        </div>
+        <div class="tp-body">${escapeHtml(excerpt)}</div>
+        <a class="tp-source" href="${poemLink(e)}">
+          <span>출처:</span>
+          <span>${e.year}.${e.month} 「${escapeHtml(e.title)}」 / ${escapeHtml(e.poet || '작자미상')}</span>
+          <span class="tp-arrow">→</span>
+        </a>`;
+      panel.querySelector('.tp-shuffle').addEventListener('click', () => showThoughtPanel(key, true));
     };
 
     if (animate) {
-      card.classList.add('fading');
-      setTimeout(() => {
-        apply();
-        card.classList.remove('fading');
-      }, 220);
+      panel.classList.add('fading');
+      setTimeout(() => { apply(); panel.classList.remove('fading'); }, 220);
     } else {
       apply();
     }
-  }
-
-  function fadeAndFill(key) { fillThoughtCard(key, true); }
-
-  function shuffleAllThoughts() {
-    const cards = document.querySelectorAll('.thought-card');
-    cards.forEach((c) => c.classList.add('fading'));
-    setTimeout(() => {
-      cards.forEach((c) => {
-        const key = c.dataset.key;
-        const pool = state.byThought[key] || [];
-        if (!pool.length) return;
-        const e = pool[Math.floor(Math.random() * pool.length)];
-        const thought = THOUGHTS.find((t) => t.key === key);
-        const excerpt = commentaryExcerpt(e.commentary, thought?.words || [], 180);
-        c.querySelector('.thought-body').textContent = excerpt;
-        const link = c.querySelector('.thought-source-link');
-        link.textContent = `${e.year}.${e.month} 「${e.title}」 / ${e.poet || '작자미상'}`;
-        link.setAttribute('href', poemLink(e));
-        c.classList.remove('fading');
-      });
-    }, 220);
   }
 
   // 키워드가 처음 등장하는 문장 주변에서 단상을 한 토막 떼어냄
