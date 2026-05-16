@@ -278,7 +278,7 @@
           <div class="random-exhibit-head">
             <div>
               <div class="exhibit-eyebrow">⊛ 특별 전시실</div>
-              <p class="random-exhibit-sub">선생님이 보내신 ${all.length}편 중 두 편을 보여드립니다</p>
+              <p class="random-exhibit-sub">여기 방문하시는 분들은 아래의 2편의 시와 선생님 생각을 읽으시기 바랍니다</p>
             </div>
             <button class="shuffle-btn" id="shuffle-btn" type="button">🔀 다른 두 편 보기</button>
           </div>
