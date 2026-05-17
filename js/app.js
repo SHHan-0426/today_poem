@@ -226,32 +226,39 @@
     const h = (location.hash || '#').slice(1);
     window.scrollTo(0, 0);
 
-    if (!h || h === '/') { renderHome(); }
+    let activeMenu = 'home';
+    if (!h || h === '/') { renderHome(); activeMenu = 'home'; }
     else {
       const parts = h.split('/');
-      if      (parts[0] === 'season')    renderSeason(decodeURIComponent(parts[1] || '봄'));
-      else if (parts[0] === 'archive')   renderArchive();
-      else if (parts[0] === 'poets')     renderPoetsIndex();
-      else if (parts[0] === 'poet')      renderPoet(decodeURIComponent(parts[1] || ''));
-      else if (parts[0] === 'poem')      renderPoem(parseInt(parts[1] || '0', 10));
-      else if (parts[0] === 'thoughts')  renderThoughts();
-      else if (parts[0] === 'today')     { renderHome(); setTimeout(()=>document.getElementById('today-section')?.scrollIntoView({behavior:'smooth',block:'start'}),60); }
-      else if (parts[0] === 'feedback')  renderFeedback();
-      else if (parts[0] === 'guestbook') renderFeedback();
-      else if (parts[0] === 'letter')    renderFeedback();
-      else if (parts[0] === 'inbox')     renderInbox();
-      else if (parts[0] === 'about')     renderAbout();
-      else                               renderHome();
+      if (parts[0] === 'browse') {
+        renderBrowse(parts[1] || '');
+        activeMenu = 'browse';
+      }
+      // 이전 URL 호환: #season, #archive, #poets, #today 등은 #browse로 흡수
+      else if (parts[0] === 'season')   { renderBrowse('season', decodeURIComponent(parts[1]||'')); activeMenu='browse'; }
+      else if (parts[0] === 'archive')  { renderBrowse('year');  activeMenu='browse'; }
+      else if (parts[0] === 'poets')    { renderBrowse('poet');  activeMenu='browse'; }
+      else if (parts[0] === 'poet')     { renderPoet(decodeURIComponent(parts[1] || '')); activeMenu='browse'; }
+      else if (parts[0] === 'poem')     { renderPoem(parseInt(parts[1] || '0', 10)); }
+      else if (parts[0] === 'thoughts') { renderThoughts(); activeMenu='thoughts'; }
+      else if (parts[0] === 'today')    { renderHome(); activeMenu='home'; setTimeout(()=>document.getElementById('today-section')?.scrollIntoView({behavior:'smooth',block:'start'}),60); }
+      else if (parts[0] === 'feedback' || parts[0] === 'guestbook' || parts[0] === 'letter') { renderFeedback(); activeMenu='feedback'; }
+      else if (parts[0] === 'inbox')    { renderInbox(); }
+      else if (parts[0] === 'about')    { renderAbout(); activeMenu='about'; }
+      else                              { renderHome(); }
     }
-    // After every render, wire up edit-mode behavior if enabled
     attachEditable(app);
+
+    // 현재 메뉴 active 표시 (일관된 hover/active 상태)
+    document.querySelectorAll('.site-nav a[data-route]').forEach((a) => {
+      a.classList.toggle('active', a.dataset.route === activeMenu);
+    });
 
     // 떠 있는 '소감 쓰기' 단추: 소감 페이지에선 숨김
     const fab = document.getElementById('fab-feedback');
     if (fab) {
       const top = (location.hash || '').slice(1).split('/')[0];
-      const hide = ['feedback','guestbook','letter','inbox'].includes(top);
-      fab.classList.toggle('hidden', hide);
+      fab.classList.toggle('hidden', ['feedback','guestbook','letter','inbox'].includes(top));
     }
   }
 
@@ -275,6 +282,9 @@
             "시는 늘 가까이에 두고 소리내어 낭송하고<br/>
             네 음악을 통하여 승화시켜 나가기를 간절히 소망한다."
           </p>
+          <div class="hero-actions">
+            <button class="btn-dice" id="hero-random" type="button">🎲 무작위 시 한 편 보기</button>
+          </div>
         </section>
 
         <!-- 🌟 대문 — 가장 최근의 편지 ─────────────────────── -->
@@ -287,11 +297,12 @@
             <div class="exhibit-excerpt">${escapeHtml(bodyExcerpt(latest.body, 8))}</div>
             <a class="exhibit-cta" href="${poemLink(latest)}">전문 들어가기 →</a>
           </article>
+          ${WRITE_ENABLED ? `
           <div id="exhibit-comments" class="exhibit-comments" data-no="${latest.no}">
             <div class="exhibit-comments-label">관람객 일기장에서</div>
             <div class="exhibit-comments-list">불러오는 중…</div>
             <a class="exhibit-comments-more" href="${poemLink(latest)}#comments">일기장 전체 보기 →</a>
-          </div>
+          </div>` : ''}
         </section>
 
         <!-- 🎨 오늘도 시와 함께 — 랜덤 2편 + 셔플 ────────────── -->
@@ -333,18 +344,17 @@
           </ul>
         </section>
 
-        <section class="cta-strip cta-single">
-          <a class="cta-card" href="#feedback">
-            <div class="cta-icon">✍️</div>
-            <div class="cta-title">방문자 소감 쓰기</div>
-            <div class="cta-desc">시를 읽으신 짧은 한 마디를 모두와 나누어 주세요</div>
-          </a>
-        </section>
       </div>
     `;
 
-    // 대문 시의 일기장 미리보기 로드
-    loadCommentsPreview(latest.no);
+    // 무작위 시 단추
+    document.getElementById('hero-random')?.addEventListener('click', () => {
+      const r = all[Math.floor(Math.random() * all.length)];
+      location.hash = poemLink(r).slice(1);
+    });
+
+    // 대문 시의 일기장 미리보기 (로컬에서만)
+    if (WRITE_ENABLED) loadCommentsPreview(latest.no);
 
     // 특별 전시실 — 초기 2편 표시 + 셔플 버튼 연결
     renderRandomPair(latest.no);
@@ -434,6 +444,114 @@
     } catch (e) {
       wrap.innerHTML = '<div class="empty-note">일기장을 불러올 수 없습니다.</div>';
     }
+  }
+
+  // ─── BROWSE — 통합 페이지 (계절·연도·시인 탭) ────────────────
+  function renderBrowse(tab, seasonName) {
+    tab = tab || localStorage.getItem('browseTab') || 'season';
+    if (!['season','year','poet'].includes(tab)) tab = 'season';
+    localStorage.setItem('browseTab', tab);
+
+    app.innerHTML = `
+      <div class="container browse-page">
+        <h1>시 둘러보기</h1>
+        <nav class="browse-tabs">
+          <a class="${tab==='season'?'on':''}" href="#browse/season">🌸 계절</a>
+          <a class="${tab==='year'  ?'on':''}" href="#browse/year">📅 연도</a>
+          <a class="${tab==='poet'  ?'on':''}" href="#browse/poet">✒️ 시인</a>
+        </nav>
+        <div id="browse-content"></div>
+      </div>`;
+
+    const content = document.getElementById('browse-content');
+    if (tab === 'season') content.innerHTML = browseSeasonsHTML(seasonName);
+    if (tab === 'year')   content.innerHTML = browseYearHTML();
+    if (tab === 'poet')   content.innerHTML = browsePoetHTML();
+    if (tab === 'poet')   bindPoetSortToggle();
+  }
+
+  function browseSeasonsHTML(seasonName) {
+    const s = SEASON_ORDER.includes(seasonName) ? seasonName : (localStorage.getItem('browseSeason') || '봄');
+    localStorage.setItem('browseSeason', s);
+    const poems = (state.bySeason[s] || []).slice().sort((a,b)=>(a.year-b.year)||(a.month-b.month));
+    const key = SEASON_KEY[s];
+    return `
+      <div class="season-subtabs">
+        ${SEASON_ORDER.map((x)=>`<a class="season-tab ${x===s?'active':''}" href="#browse/season/${encodeURIComponent(x)}">${x}</a>`).join('')}
+      </div>
+      <div class="season-banner ${key}">
+        <h2>${s}의 방</h2>
+        <p class="desc">${SEASON_DESC[s]} · 총 ${poems.length}편</p>
+      </div>
+      <div class="poem-grid">
+        ${poems.map((e)=>`
+          <a class="poem-card" href="${poemLink(e)}">
+            <div class="meta">${formatDate(e)}</div>
+            <div class="title">${escapeHtml(e.title)}</div>
+            <div class="poet">— ${escapeHtml(e.poet || '작자미상')}</div>
+          </a>`).join('')}
+      </div>`;
+  }
+
+  function browseYearHTML() {
+    const years = Array.from(state.byYear.keys()).sort((a,b)=>b-a);
+    return `
+      <p class="page-intro">2006년 9월부터 최근까지, 연도별로 모아봅니다. 최신 연도부터.</p>
+      ${years.map((y)=>{
+        const list = state.byYear.get(y).slice().sort((a,b)=>a.month-b.month);
+        return `
+          <section class="year-block">
+            <h2>${y} <span class="count">${list.length}편</span></h2>
+            <ul class="year-list">
+              ${list.map((e)=>`
+                <li><a href="${poemLink(e)}">
+                  <span class="month">${e.month}월</span>
+                  <span class="title">${escapeHtml(e.title)}</span>
+                  <span class="poet">${escapeHtml(e.poet || '—')}</span>
+                </a></li>`).join('')}
+            </ul>
+          </section>`;
+      }).join('')}`;
+  }
+
+  function browsePoetHTML() {
+    const sortMode = localStorage.getItem('poetSort') || 'count';
+    const all = Array.from(state.byPoet.entries())
+      .map(([name, list]) => ({ name, count: list.length, cat: poetCategory(name) }));
+    const groups = {0: [], 1: [], 2: []};
+    all.forEach((p) => groups[p.cat].push(p));
+    Object.values(groups).forEach((arr) => arr.sort((a,b) => {
+      if (sortMode === 'count') return b.count - a.count || a.name.localeCompare(b.name, 'ko');
+      return a.name.localeCompare(b.name, 'ko');
+    }));
+    return `
+      <div class="poets-head">
+        <p class="page-intro">총 ${all.length}명 · 한국 → 외국 → 작자 미상 순</p>
+        <div class="sort-toggle">
+          <button class="sort-opt ${sortMode==='count'?'on':''}" data-sort="count" type="button">수록편수</button>
+          <button class="sort-opt ${sortMode==='name' ?'on':''}" data-sort="name"  type="button">가나다순</button>
+        </div>
+      </div>
+      ${[0,1,2].filter((c)=>groups[c].length).map((c)=>`
+        <section class="poet-group">
+          <h2 class="poet-group-title">${POET_CAT_LABEL[c]} <span class="poet-group-count">${groups[c].length}명</span></h2>
+          <div class="poets-grid">
+            ${groups[c].map((p)=>`
+              <a href="#poet/${encodeURIComponent(p.name)}">
+                <span class="name">${escapeHtml(p.name)}</span>
+                <span class="count">${p.count}</span>
+              </a>`).join('')}
+          </div>
+        </section>`).join('')}`;
+  }
+
+  function bindPoetSortToggle() {
+    document.querySelectorAll('.sort-opt').forEach((b) => {
+      b.addEventListener('click', () => {
+        localStorage.setItem('poetSort', b.dataset.sort);
+        renderBrowse('poet');
+      });
+    });
   }
 
   // ─── SEASON ───────────────────────────────────────────────────

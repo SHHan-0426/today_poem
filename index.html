@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/main.css?v=20260516n" />
+  <link rel="stylesheet" href="css/main.css?v=20260517a" />
 </head>
 <body>
   <header class="site-header">
@@ -18,14 +18,11 @@
         <span class="brand-subtitle">강화 동검도 유하재 · 겸하 김대권</span>
       </a>
       <nav class="site-nav" id="site-nav">
-        <a href="#">홈</a>
-        <a href="#today">오늘도 시와 함께</a>
-        <a href="#season/봄">계절</a>
-        <a href="#archive">연도</a>
-        <a href="#poets">시인</a>
-        <a class="nav-accent" href="#thoughts">생각의 방</a>
-        <a href="#feedback">방문자 소감</a>
-        <a href="#about">소개</a>
+        <a href="#" data-route="home">홈</a>
+        <a href="#browse" data-route="browse">시 둘러보기</a>
+        <a class="nav-accent" href="#thoughts" data-route="thoughts">선생님의 생각</a>
+        <a href="#feedback" data-route="feedback">방문자 소감</a>
+        <a href="#about" data-route="about">소개</a>
       </nav>
       <button class="edit-toggle" id="edit-toggle" title="편집 모드 켜기/끄기">✎ 편집</button>
       <button class="nav-toggle" id="nav-toggle" aria-label="메뉴 열기">≡</button>
@@ -49,12 +46,41 @@
 
   <footer class="site-footer">
     <div class="container">
-      <p>강화 동검도 유하재에서 — 겸하 김대권 선생님</p>
-      <p class="copy">© 동검도에서 보낸 편지 · 2006–</p>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-title">동검도에서 보낸 편지</div>
+          <p class="footer-text">
+            2006년 9월부터 매달 1일,<br/>
+            한 편의 시와 한 사람의 마음을 띄웁니다.<br/>
+            <span class="footer-dim">— 강화 동검도 유하재 · 겸하 김대권 선생님</span>
+          </p>
+        </div>
+        <div class="footer-col">
+          <div class="footer-title">빠른 길</div>
+          <ul class="footer-links">
+            <li><a href="#browse">시 둘러보기</a></li>
+            <li><a href="#thoughts">선생님의 생각</a></li>
+            <li><a href="#feedback">방문자 소감 남기기</a></li>
+            <li><a href="#about">사이트 소개</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <div class="footer-title">함께 만들기</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/SHHan-0426/today_poem" target="_blank" rel="noopener">GitHub 저장소 ↗</a></li>
+            <li><a href="https://www.youtube.com/watch?v=ReK9WkGyZ7k" target="_blank" rel="noopener">유하재 인터뷰 영상 ↗</a></li>
+            <li><a href="#feedback">한 마디 남기기</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span class="copy">© 동검도에서 보낸 편지 · 2006–</span>
+        <span class="footer-meta">수록 시의 저작권은 각 시인에게, 단상은 김대권 선생님께 있습니다. 비영리 교육·기념 목적.</span>
+      </div>
     </div>
   </footer>
 
-  <script src="js/config.js?v=20260516n"></script>
-  <script src="js/app.js?v=20260516n"></script>
+  <script src="js/config.js?v=20260517a"></script>
+  <script src="js/app.js?v=20260517a"></script>
 </body>
 </html>
