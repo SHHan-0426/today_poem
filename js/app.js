@@ -283,7 +283,7 @@
             네 음악을 통하여 승화시켜 나가기를 간절히 소망한다."
           </p>
           <div class="hero-actions">
-            <button class="btn-dice" id="hero-random" type="button">🎲 무작위 시 한 편 보기</button>
+            <button class="btn-dice" id="hero-random" type="button">💌 마음 가는 대로 한 편</button>
           </div>
         </section>
 
