@@ -991,9 +991,8 @@
     }
     if (SUPABASE_READY) {
       // teacher_replies 까지 한 번에 조회 (Supabase embedded select)
-      let url = `${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id,teacher_replies(body,created_at)&order=created_at.desc&limit=200`;
+      let url = `${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id,teacher_replies(id,body,created_at)&order=created_at.desc&limit=200`;
       let r = await fetch(url, { headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` } });
-      // teacher_replies 테이블이 아직 없으면 폴백
       if (!r.ok && r.status === 400) {
         url = `${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id&order=created_at.desc&limit=200`;
         r = await fetch(url, { headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` } });
@@ -1004,6 +1003,7 @@
         const reply = (x.teacher_replies && x.teacher_replies[0]) || null;
         return {
           id: x.id, name: x.name, body: x.body, ts: x.created_at, visitor_id: x.visitor_id,
+          reply_id: reply ? reply.id : null,
           reply: reply ? reply.body : null,
           reply_ts: reply ? reply.created_at : null,
         };
@@ -1023,6 +1023,30 @@
         Prefer: 'return=minimal',
       },
       body: JSON.stringify({ guestbook_id: guestbookId, body }),
+    });
+    return r.ok;
+  }
+
+  async function updateTeacherReply(replyId, body) {
+    if (!SUPABASE_READY) return false;
+    const r = await fetch(`${SB.url}/rest/v1/teacher_replies?id=eq.${replyId}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: SB.anonKey,
+        Authorization: `Bearer ${SB.anonKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ body }),
+    });
+    return r.ok;
+  }
+
+  async function deleteTeacherReply(replyId) {
+    if (!SUPABASE_READY) return false;
+    const r = await fetch(`${SB.url}/rest/v1/teacher_replies?id=eq.${replyId}`, {
+      method: 'DELETE',
+      headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` },
     });
     return r.ok;
   }
@@ -1179,10 +1203,15 @@
           <div class="fb-body">${escapeHtml(g.body)}</div>
 
           ${g.reply ? `
-            <div class="teacher-reply">
+            <div class="teacher-reply" data-reply-id="${escapeHtml(g.reply_id || '')}">
               <div class="tr-head">
                 <span class="tr-label">✍️ 선생님 답글</span>
                 <span class="tr-time">${tsFormat(g.reply_ts)}</span>
+                ${admin && g.reply_id ? `
+                  <span class="tr-actions">
+                    <button class="tr-edit-btn" data-act="reply-edit" data-rid="${escapeHtml(g.reply_id)}">수정</button>
+                    <button class="tr-del-btn"  data-act="reply-del"  data-rid="${escapeHtml(g.reply_id)}">삭제</button>
+                  </span>` : ''}
               </div>
               <div class="tr-body">${escapeHtml(g.reply)}</div>
             </div>` : (admin ? `
@@ -1205,6 +1234,50 @@
       btn.addEventListener('click', () => confirmDeleteFeedback(btn.dataset.id)));
     wrap.querySelectorAll('[data-act="reply"]').forEach((btn) =>
       btn.addEventListener('click', () => startReplyTo(btn.dataset.id)));
+    wrap.querySelectorAll('[data-act="reply-edit"]').forEach((btn) =>
+      btn.addEventListener('click', () => startEditReply(btn.dataset.rid)));
+    wrap.querySelectorAll('[data-act="reply-del"]').forEach((btn) =>
+      btn.addEventListener('click', () => confirmDeleteReply(btn.dataset.rid)));
+  }
+
+  function startEditReply(rid) {
+    const box = document.querySelector(`.teacher-reply[data-reply-id="${CSS.escape(rid)}"]`);
+    if (!box) return;
+    const bodyEl = box.querySelector('.tr-body');
+    const oldText = bodyEl.textContent;
+    const form = document.createElement('div');
+    form.className = 'tr-edit-pane';
+    form.innerHTML = `
+      <textarea class="tr-edit-area" maxlength="4000" rows="4">${escapeHtml(oldText)}</textarea>
+      <div class="tr-edit-row">
+        <button class="btn-primary" data-save-reply-edit="${escapeHtml(rid)}">저장</button>
+        <button class="tr-edit-cancel">취소</button>
+        <span class="form-status tr-edit-status"></span>
+      </div>`;
+    bodyEl.style.display = 'none';
+    box.appendChild(form);
+    form.querySelector('textarea').focus();
+    form.querySelector('.tr-edit-cancel').addEventListener('click', () => loadFeedbackList());
+    form.querySelector('[data-save-reply-edit]').addEventListener('click', async (ev) => {
+      const text = form.querySelector('textarea').value.trim();
+      if (!text) return;
+      const status = form.querySelector('.tr-edit-status');
+      ev.target.disabled = true;
+      status.textContent = '저장 중…'; status.className = 'form-status tr-edit-status';
+      const ok = await updateTeacherReply(rid, text);
+      if (ok) loadFeedbackList();
+      else {
+        ev.target.disabled = false;
+        status.textContent = '실패 — 권한 또는 서버 오류'; status.className = 'form-status tr-edit-status err';
+      }
+    });
+  }
+
+  async function confirmDeleteReply(rid) {
+    if (!confirm('이 답글을 지울까요?\n(되돌릴 수 없습니다)')) return;
+    const ok = await deleteTeacherReply(rid);
+    if (ok) loadFeedbackList();
+    else alert('삭제 실패 — Supabase 정책 또는 서버 오류');
   }
 
   function startReplyTo(id) {
