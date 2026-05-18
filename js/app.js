@@ -20,7 +20,6 @@
   const STATIC_NOTE = '<div class="static-note">🌱 방문자 기록 기능은 곧 추가됩니다. 지금은 시와 단상만 둘러보실 수 있습니다.</div>';
 
   // 방문자 식별 — 브라우저에 한 번 만들어 두는 비밀 ID
-  // (이 ID 가 있는 글만 같은 방문자가 수정·삭제 가능)
   const VISITOR_ID = (() => {
     let id = localStorage.getItem('visitorId');
     if (!id || id.length < 30) {
@@ -30,6 +29,18 @@
     }
     return id;
   })();
+
+  // 관리자(선생님) 모드 — 비밀번호 해시 일치 시 활성화
+  const ADMIN_HASH = window.SITE_CONFIG?.adminPasswordHash || '';
+  function isAdmin() { return localStorage.getItem('adminMode') === '1'; }
+  function setAdminMode(on) {
+    if (on) localStorage.setItem('adminMode', '1');
+    else localStorage.removeItem('adminMode');
+  }
+  async function sha256Hex(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2,'0')).join('');
+  }
 
   const SEASON_KEY = { 봄: 'spring', 여름: 'summer', 가을: 'autumn', 겨울: 'winter' };
   const SEASON_DESC = {
@@ -244,6 +255,7 @@
       else if (parts[0] === 'today')    { renderHome(); activeMenu='home'; setTimeout(()=>document.getElementById('today-section')?.scrollIntoView({behavior:'smooth',block:'start'}),60); }
       else if (parts[0] === 'feedback' || parts[0] === 'guestbook' || parts[0] === 'letter') { renderFeedback(); activeMenu='feedback'; }
       else if (parts[0] === 'inbox')    { renderInbox(); }
+      else if (parts[0] === 'admin')    { renderAdminLogin(); }
       else if (parts[0] === 'about')    { renderAbout(); activeMenu='about'; }
       else                              { renderHome(); }
     }
@@ -978,14 +990,41 @@
       return (d.entries || []).slice().sort((a,b) => (a.ts<b.ts?1:-1));
     }
     if (SUPABASE_READY) {
-      const r = await fetch(`${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id&order=created_at.desc&limit=200`, {
-        headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` },
-      });
+      // teacher_replies 까지 한 번에 조회 (Supabase embedded select)
+      let url = `${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id,teacher_replies(body,created_at)&order=created_at.desc&limit=200`;
+      let r = await fetch(url, { headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` } });
+      // teacher_replies 테이블이 아직 없으면 폴백
+      if (!r.ok && r.status === 400) {
+        url = `${SB.url}/rest/v1/guestbook?select=id,name,body,created_at,visitor_id&order=created_at.desc&limit=200`;
+        r = await fetch(url, { headers: { apikey: SB.anonKey, Authorization: `Bearer ${SB.anonKey}` } });
+      }
       if (!r.ok) throw new Error(`Supabase ${r.status}`);
       const arr = await r.json();
-      return arr.map((x) => ({ id: x.id, name: x.name, body: x.body, ts: x.created_at, visitor_id: x.visitor_id }));
+      return arr.map((x) => {
+        const reply = (x.teacher_replies && x.teacher_replies[0]) || null;
+        return {
+          id: x.id, name: x.name, body: x.body, ts: x.created_at, visitor_id: x.visitor_id,
+          reply: reply ? reply.body : null,
+          reply_ts: reply ? reply.created_at : null,
+        };
+      });
     }
-    return null;  // 백엔드 미설정
+    return null;
+  }
+
+  async function addTeacherReply(guestbookId, body) {
+    if (!SUPABASE_READY) return false;
+    const r = await fetch(`${SB.url}/rest/v1/teacher_replies`, {
+      method: 'POST',
+      headers: {
+        apikey: SB.anonKey,
+        Authorization: `Bearer ${SB.anonKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ guestbook_id: guestbookId, body }),
+    });
+    return r.ok;
   }
 
   async function postFeedback(name, body) {
@@ -1123,6 +1162,7 @@
         wrap.innerHTML = '<div class="empty-note">아직 첫 소감이 없습니다. 따뜻한 한 마디를 남겨 주세요.</div>';
         return;
       }
+      const admin = isAdmin();
       wrap.innerHTML = entries.map((g) => {
         const mine = g.visitor_id && g.visitor_id === VISITOR_ID;
         return `
@@ -1137,6 +1177,17 @@
               </span>` : ''}
           </div>
           <div class="fb-body">${escapeHtml(g.body)}</div>
+
+          ${g.reply ? `
+            <div class="teacher-reply">
+              <div class="tr-head">
+                <span class="tr-label">✍️ 선생님 답글</span>
+                <span class="tr-time">${tsFormat(g.reply_ts)}</span>
+              </div>
+              <div class="tr-body">${escapeHtml(g.reply)}</div>
+            </div>` : (admin ? `
+              <button class="tr-add-btn" data-act="reply" data-id="${escapeHtml(g.id)}">✍️ 선생님 답글 쓰기</button>
+            ` : '')}
         </article>`;
       }).join('');
       bindFeedbackActions();
@@ -1148,13 +1199,43 @@
   function bindFeedbackActions() {
     const wrap = document.getElementById('fb-list');
     if (!wrap) return;
-    // 수정
-    wrap.querySelectorAll('[data-act="edit"]').forEach((btn) => {
-      btn.addEventListener('click', () => startEditFeedback(btn.dataset.id));
-    });
-    // 삭제
-    wrap.querySelectorAll('[data-act="del"]').forEach((btn) => {
-      btn.addEventListener('click', () => confirmDeleteFeedback(btn.dataset.id));
+    wrap.querySelectorAll('[data-act="edit"]').forEach((btn) =>
+      btn.addEventListener('click', () => startEditFeedback(btn.dataset.id)));
+    wrap.querySelectorAll('[data-act="del"]').forEach((btn) =>
+      btn.addEventListener('click', () => confirmDeleteFeedback(btn.dataset.id)));
+    wrap.querySelectorAll('[data-act="reply"]').forEach((btn) =>
+      btn.addEventListener('click', () => startReplyTo(btn.dataset.id)));
+  }
+
+  function startReplyTo(id) {
+    const article = document.querySelector(`.fb-entry[data-id="${CSS.escape(id)}"]`);
+    if (!article) return;
+    const btn = article.querySelector('.tr-add-btn');
+    if (!btn) return;
+    const form = document.createElement('div');
+    form.className = 'tr-edit-pane';
+    form.innerHTML = `
+      <textarea class="tr-edit-area" maxlength="4000" rows="4" placeholder="이 소감에 답글을 남겨 주세요…"></textarea>
+      <div class="tr-edit-row">
+        <button class="btn-primary" data-save-reply="${escapeHtml(id)}">답글 남기기</button>
+        <button class="tr-edit-cancel">취소</button>
+        <span class="form-status tr-edit-status"></span>
+      </div>`;
+    btn.replaceWith(form);
+    form.querySelector('textarea').focus();
+    form.querySelector('.tr-edit-cancel').addEventListener('click', () => loadFeedbackList());
+    form.querySelector('[data-save-reply]').addEventListener('click', async (ev) => {
+      const text = form.querySelector('textarea').value.trim();
+      if (!text) return;
+      const status = form.querySelector('.tr-edit-status');
+      ev.target.disabled = true;
+      status.textContent = '저장 중…'; status.className = 'form-status tr-edit-status';
+      const ok = await addTeacherReply(id, text);
+      if (ok) loadFeedbackList();
+      else {
+        ev.target.disabled = false;
+        status.textContent = '실패 — 권한 또는 서버 오류'; status.className = 'form-status tr-edit-status err';
+      }
     });
   }
 
@@ -1355,6 +1436,50 @@
         </div>
         <div class="gb-body">${escapeHtml(m.body)}</div>
       </article>`).join('');
+  }
+
+  // ─── ADMIN (관리자 로그인) ────────────────────────────────
+  function renderAdminLogin() {
+    const on = isAdmin();
+    app.innerHTML = `
+      <div class="container admin-page">
+        <h1>관리자 로그인</h1>
+        ${ADMIN_HASH ? `
+          <p class="page-intro">선생님 답글 권한을 얻으려면 비밀번호를 입력해 주세요.</p>
+          ${on ? `
+            <div class="static-note">
+              ✓ 현재 <strong>관리자 모드 켜져 있음</strong>.<br/>
+              <a href="#feedback">소감 페이지로 이동</a> · <a href="#" id="admin-logout">관리자 모드 끄기</a>
+            </div>
+          ` : `
+            <form id="admin-form" class="admin-form">
+              <input type="password" name="password" required autofocus placeholder="비밀번호 입력" />
+              <div class="form-row">
+                <button type="submit" class="btn-primary">들어가기</button>
+                <span class="form-status"></span>
+              </div>
+            </form>
+          `}
+        ` : `<div class="static-note">관리자 비밀번호가 아직 설정되지 않았습니다.</div>`}
+      </div>`;
+
+    document.getElementById('admin-form')?.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const input = ev.target.password.value;
+      const status = ev.target.querySelector('.form-status');
+      status.textContent = '확인 중…'; status.className = 'form-status';
+      const hash = await sha256Hex(input);
+      if (hash === ADMIN_HASH) {
+        setAdminMode(true);
+        status.textContent = '인증되었습니다. 잠시 후 소감 페이지로 이동합니다.'; status.className = 'form-status ok';
+        setTimeout(() => { location.hash = 'feedback'; }, 700);
+      } else {
+        status.textContent = '비밀번호가 맞지 않습니다.'; status.className = 'form-status err';
+      }
+    });
+    document.getElementById('admin-logout')?.addEventListener('click', (e) => {
+      e.preventDefault(); setAdminMode(false); renderAdminLogin();
+    });
   }
 
   // ─── ABOUT ────────────────────────────────────────────────────
