@@ -772,7 +772,7 @@
               <div class="comment-list" data-comment-list>불러오는 중…</div>
             ` : `
               <div class="poem-feedback-cue">
-                시와 선생님 생각을 읽으신 후 소감이 있으시면<br/>
+                시와 선생님 생각을 읽으신 후 소중한 소감을<br/>
                 <a href="#feedback" class="cue-link">✍️ 소감 쓰기</a>를 눌러 써 주세요.
               </div>
             `}
