@@ -640,6 +640,35 @@ body.edit-mode .edit-help { display: block; }
 }
 .empty-note.err { color: #a33; font-style: normal; }
 
+.poem-feedback-cue {
+  background: linear-gradient(180deg, #fdf6e6, var(--paper-deep));
+  border: 1px solid var(--accent-soft);
+  border-radius: 6px;
+  padding: 26px 28px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 15.5px;
+  line-height: 2;
+  color: var(--ink-soft);
+}
+.poem-feedback-cue .cue-link {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff !important;
+  padding: 7px 16px;
+  margin: 4px 4px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: background .15s ease, transform .15s ease;
+}
+.poem-feedback-cue .cue-link:hover {
+  background: #6d2d22;
+  transform: translateY(-1px);
+}
+
 .static-note {
   background: var(--paper-deep);
   border: 1px dashed var(--accent-soft);
